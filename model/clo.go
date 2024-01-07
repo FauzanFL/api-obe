@@ -1,7 +1,12 @@
 package model
 
 type CLO struct {
-	ID int `json:"id" gorm:"primary_key"`
+	ID        int     `json:"id" gorm:"primary_key"`
+	PLOId     int     `json:"plo_id"`
+	Nama      string  `json:"nama"`
+	Deskripsi string  `json:"deskripsi"`
+	Bobot     float64 `json:"bobot"`
+	MkId      int     `json:"mk_id"`
 }
 
 func (CLO) TableName() string {

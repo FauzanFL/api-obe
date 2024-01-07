@@ -1,7 +1,10 @@
 package model
 
 type Dosen struct {
-	KodeDosen string `json:"kode_dosen" gorm:"primary_key"`
+	ID        int    `json:"id" gorm:"primary_key"`
+	KodeDosen string `json:"kode_dosen"`
+	Nama      string `json:"nama"`
+	UserId    int    `json:"user_id"`
 }
 
 func (Dosen) TableName() string {

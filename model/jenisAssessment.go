@@ -1,7 +1,8 @@
 package model
 
 type JenisAssessment struct {
-	ID int `json:"id" gorm:"primary_key"`
+	ID   int    `json:"id" gorm:"primary_key"`
+	Nama string `json:"nama"`
 }
 
 func (JenisAssessment) TableName() string {

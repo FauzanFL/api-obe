@@ -1,7 +1,9 @@
 package model
 
 type MkMahasiswa struct {
-	ID int `json:"id" gorm:"primary_key"`
+	ID    int `json:"id" gorm:"primary_key"`
+	MKId  int `json:"mk_id"`
+	MhsId int `json:"mhs_id"`
 }
 
 func (MkMahasiswa) TableName() string {
