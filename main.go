@@ -69,7 +69,7 @@ func main() {
 	{
 		userRouter.GET("/", authMiddleware.RequireAuth, userController.GetUser)
 		userRouter.POST("/", authMiddleware.RequireAuth, userController.AddUser)
-		userRouter.DELETE("/:id", authMiddleware.RequireAuth, userController.DeleteUser)
+		userRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, userController.DeleteUser)
 		userRouter.PUT("/update/:id", authMiddleware.RequireAuth, userController.UpdateUser)
 		userRouter.POST("/login", userController.Login)
 		userRouter.GET("/logout", authMiddleware.RequireAuth, userController.Logout)

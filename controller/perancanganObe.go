@@ -52,7 +52,7 @@ func (m *perancanganObeController) GetPerancanganObeById(c *gin.Context) {
 
 func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 	var perancanganObe model.PerancanganObe
-	if err := c.ShouldBind(&perancanganObe); err != nil {
+	if err := c.Bind(&perancanganObe); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -65,7 +65,7 @@ func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 
 func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
 	var perancanganObe model.PerancanganObe
-	if err := c.ShouldBind(&perancanganObe); err != nil {
+	if err := c.Bind(&perancanganObe); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
