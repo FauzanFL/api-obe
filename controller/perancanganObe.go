@@ -51,11 +51,27 @@ func (m *perancanganObeController) GetPerancanganObeById(c *gin.Context) {
 }
 
 func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
-	var perancanganObe model.PerancanganObe
-	if err := c.Bind(&perancanganObe); err != nil {
+	var body struct {
+		Nama        string `json:"nama" binding:"required"`
+		KurikulumID int    `json:"kurikulum_id" binding:"required"`
+	}
+
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if body.Nama == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama is empty"})
+		return
+	}
+	if body.KurikulumID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id is empty"})
+		return
+	}
+
+	var perancanganObe model.PerancanganObe
+	perancanganObe.Nama = body.Nama
+	perancanganObe.KurikulumID = body.KurikulumID
 	if err := m.perancanganObeRepo.CreatePerancanganObe(perancanganObe); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -64,11 +80,34 @@ func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 }
 
 func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
-	var perancanganObe model.PerancanganObe
-	if err := c.Bind(&perancanganObe); err != nil {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var body struct {
+		Nama        string `json:"nama" binding:"required"`
+		KurikulumID int    `json:"kurikulum_id" binding:"required"`
+	}
+
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if body.Nama == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama is empty"})
+		return
+	}
+	if body.KurikulumID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id is empty"})
+		return
+	}
+
+	var perancanganObe model.PerancanganObe
+	perancanganObe.Nama = body.Nama
+	perancanganObe.KurikulumID = body.KurikulumID
+	perancanganObe.ID = id
 	if err := m.perancanganObeRepo.UpdatePerancanganObe(perancanganObe); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -77,14 +116,13 @@ func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
 }
 
 func (m *perancanganObeController) DeletePerancanganObe(c *gin.Context) {
-	id := c.Param("id")
-	idInt, err := strconv.Atoi(id)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := m.perancanganObeRepo.DeletePerancanganObe(idInt); err != nil {
+	if err := m.perancanganObeRepo.DeletePerancanganObe(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

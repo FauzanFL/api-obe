@@ -87,6 +87,12 @@ func (u *userController) AddUser(c *gin.Context) {
 }
 
 func (u *userController) UpdateUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	var body struct {
 		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -104,17 +110,6 @@ func (u *userController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	recordUser, err := u.userRepo.GetUserByEmail(body.Email)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if recordUser.Email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email not found"})
-		return
-	}
-
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -124,8 +119,7 @@ func (u *userController) UpdateUser(c *gin.Context) {
 	var user model.User
 	user.Email = body.Email
 	user.Password = string(hash)
-	user.Role = recordUser.Role
-	user.ID = recordUser.ID
+	user.ID = id
 
 	if err := u.userRepo.Update(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

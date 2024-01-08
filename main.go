@@ -59,11 +59,14 @@ func init() {
 func main() {
 	r := gin.Default()
 	dbUser := db.GetDBConnection(os.Getenv("DB_USER_IDENTIFICATION_NAME"))
+	dbKurikulum := db.GetDBConnection(os.Getenv("DB_KURIKULUM_IDENTIFICATION_NAME"))
 	userRepo := repo.NewUserRepo(dbUser)
+	perancanganObeRepo := repo.NewPerancanganObeRepo(dbKurikulum)
 
 	authMiddleware := middleware.NewAuthMiddleware(userRepo)
 
 	userController := controller.NewUserController(userRepo)
+	perancanganObeController := controller.NewPerancanganObeController(perancanganObeRepo)
 
 	userRouter := r.Group("/users")
 	{
@@ -73,6 +76,15 @@ func main() {
 		userRouter.PUT("/update/:id", authMiddleware.RequireAuth, userController.UpdateUser)
 		userRouter.POST("/login", userController.Login)
 		userRouter.GET("/logout", authMiddleware.RequireAuth, userController.Logout)
+	}
+
+	perancanganObeRouter := r.Group("/perancangan_obe")
+	{
+		perancanganObeRouter.GET("/", authMiddleware.RequireAuth, perancanganObeController.GetPerancanganObe)
+		perancanganObeRouter.GET("/:id", authMiddleware.RequireAuth, perancanganObeController.GetPerancanganObeById)
+		perancanganObeRouter.POST("/", authMiddleware.RequireAuth, perancanganObeController.CreatePerancanganObe)
+		perancanganObeRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, perancanganObeController.DeletePerancanganObe)
+		perancanganObeRouter.PUT("/update/:id", authMiddleware.RequireAuth, perancanganObeController.UpdatePerancanganObe)
 	}
 
 	r.GET("/", func(c *gin.Context) {
