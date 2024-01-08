@@ -67,10 +67,12 @@ func main() {
 
 	userRouter := r.Group("/users")
 	{
-		userRouter.POST("/", userController.AddUser)
-		userRouter.DELETE("/", userController.DeleteUser)
+		userRouter.GET("/", authMiddleware.RequireAuth, userController.GetUser)
+		userRouter.POST("/", authMiddleware.RequireAuth, userController.AddUser)
+		userRouter.DELETE("/:id", authMiddleware.RequireAuth, userController.DeleteUser)
+		userRouter.PUT("/update/:id", authMiddleware.RequireAuth, userController.UpdateUser)
 		userRouter.POST("/login", userController.Login)
-		userRouter.GET("/", authMiddleware.RequireAuth, userController.Validate)
+		userRouter.GET("/logout", authMiddleware.RequireAuth, userController.Logout)
 	}
 
 	r.GET("/", func(c *gin.Context) {

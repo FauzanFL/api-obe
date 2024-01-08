@@ -5,6 +5,7 @@ import (
 	repo "api-obe/repository"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,11 +14,12 @@ import (
 )
 
 type UserController interface {
+	GetUser(c *gin.Context)
 	AddUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
 	Login(c *gin.Context)
 	Logout(c *gin.Context)
-	Validate(c *gin.Context)
 }
 
 type userController struct {
@@ -28,12 +30,21 @@ func NewUserController(userRepo repo.UserRepository) UserController {
 	return &userController{userRepo}
 }
 
+func (u *userController) GetUser(c *gin.Context) {
+	user, err := u.userRepo.GetUser()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
 func (u *userController) AddUser(c *gin.Context) {
 	var body struct {
 		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"`
 	}
-	if err := c.BindJSON(&body); err != nil {
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -75,17 +86,68 @@ func (u *userController) AddUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User added successfully"})
 }
 
-func (u *userController) DeleteUser(c *gin.Context) {
-	var user model.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+func (u *userController) UpdateUser(c *gin.Context) {
+	var body struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := u.userRepo.Delete(user.Email); err != nil {
+	if body.Email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is empty"})
+		return
+	}
+	if body.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "password is empty"})
+		return
+	}
+
+	recordUser, err := u.userRepo.GetUserByEmail(body.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if recordUser.Email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email not found"})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var user model.User
+	user.Email = body.Email
+	user.Password = string(hash)
+	user.Role = recordUser.Role
+	user.ID = recordUser.ID
+
+	if err := u.userRepo.Update(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+}
+
+func (u *userController) DeleteUser(c *gin.Context) {
+	id := c.Param("id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := u.userRepo.Delete(idInt); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Delete Account Successful"})
 }
 
 func (u *userController) Login(c *gin.Context) {
@@ -144,10 +206,4 @@ func (u *userController) Login(c *gin.Context) {
 func (u *userController) Logout(c *gin.Context) {
 	c.SetCookie("Authorization", "", -1, "", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Logout success"})
-}
-
-func (u *userController) Validate(c *gin.Context) {
-	user, _ := c.Get("user")
-
-	c.JSON(http.StatusOK, user)
 }

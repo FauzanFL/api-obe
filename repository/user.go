@@ -7,10 +7,12 @@ import (
 )
 
 type UserRepository interface {
+	GetUser() ([]model.User, error)
 	GetUserById(id int) (model.User, error)
 	GetUserByEmail(email string) (model.User, error)
 	Add(user model.User) error
-	Delete(email string) error
+	Update(user model.User) error
+	Delete(id int) error
 }
 
 type userRepository struct {
@@ -19,6 +21,15 @@ type userRepository struct {
 
 func NewUserRepo(db *gorm.DB) UserRepository {
 	return &userRepository{db}
+}
+
+func (u *userRepository) GetUser() ([]model.User, error) {
+	var users []model.User
+	err := u.db.Find(&users).Error
+	if err != nil {
+		return []model.User{}, err
+	}
+	return users, nil
 }
 
 func (u *userRepository) GetUserById(id int) (model.User, error) {
@@ -49,6 +60,10 @@ func (u *userRepository) Add(user model.User) error {
 	return u.db.Create(&user).Error
 }
 
-func (u *userRepository) Delete(email string) error {
-	return u.db.Where("email = ?", email).Delete(&model.User{}).Error
+func (u *userRepository) Update(user model.User) error {
+	return u.db.Save(&user).Error
+}
+
+func (u *userRepository) Delete(id int) error {
+	return u.db.Where("id = ?", id).Delete(&model.User{}).Error
 }
