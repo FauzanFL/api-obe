@@ -11,16 +11,16 @@ type TahunAjaranRepository interface {
 }
 
 type tahunAjaranRepository struct {
-	db *gorm.DB
+	dbPenilaian *gorm.DB
 }
 
-func NewTahunAjaranRepo(db *gorm.DB) TahunAjaranRepository {
-	return &tahunAjaranRepository{db}
+func NewTahunAjaranRepo(dbPenilaian *gorm.DB) TahunAjaranRepository {
+	return &tahunAjaranRepository{dbPenilaian}
 }
 
 func (p *tahunAjaranRepository) GetTahunAjaran() ([]model.TahunAjaran, error) {
 	var tahunAjaran []model.TahunAjaran
-	err := p.db.Find(&tahunAjaran).Error
+	err := p.dbPenilaian.Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
 	}

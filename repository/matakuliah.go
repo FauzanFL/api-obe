@@ -11,16 +11,16 @@ type MataKuliahRepository interface {
 }
 
 type mataKuliahRepository struct {
-	db *gorm.DB
+	dbKurikulum *gorm.DB
 }
 
-func NewMataKuliahRepo(db *gorm.DB) MataKuliahRepository {
-	return &mataKuliahRepository{db}
+func NewMataKuliahRepo(dbKurikulum *gorm.DB) MataKuliahRepository {
+	return &mataKuliahRepository{dbKurikulum}
 }
 
 func (m *mataKuliahRepository) GetMataKuliah() ([]model.MataKuliah, error) {
 	var mataKuliah []model.MataKuliah
-	err := m.db.Find(&mataKuliah).Error
+	err := m.dbKurikulum.Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}

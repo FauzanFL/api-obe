@@ -11,16 +11,16 @@ type MahasiswaRepository interface {
 }
 
 type mahasiswaRepository struct {
-	db *gorm.DB
+	dbPenilaian *gorm.DB
 }
 
-func NewMahasiswaRepo(db *gorm.DB) MahasiswaRepository {
-	return &mahasiswaRepository{db}
+func NewMahasiswaRepo(dbPenilaian *gorm.DB) MahasiswaRepository {
+	return &mahasiswaRepository{dbPenilaian}
 }
 
 func (m *mahasiswaRepository) GetMahasiswa() ([]model.Mahasiswa, error) {
 	var mahasiswa []model.Mahasiswa
-	err := m.db.Find(&mahasiswa).Error
+	err := m.dbPenilaian.Find(&mahasiswa).Error
 	if err != nil {
 		return []model.Mahasiswa{}, err
 	}

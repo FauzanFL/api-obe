@@ -11,16 +11,16 @@ type DosenRepository interface {
 }
 
 type dosenRepository struct {
-	db *gorm.DB
+	dbUser *gorm.DB
 }
 
-func NewDosenRepo(db *gorm.DB) DosenRepository {
-	return &dosenRepository{db}
+func NewDosenRepo(dbUser *gorm.DB) DosenRepository {
+	return &dosenRepository{dbUser}
 }
 
 func (d *dosenRepository) GetDosen() ([]model.Dosen, error) {
 	var dosen []model.Dosen
-	err := d.db.Find(&dosen).Error
+	err := d.dbUser.Find(&dosen).Error
 	if err != nil {
 		return []model.Dosen{}, err
 	}

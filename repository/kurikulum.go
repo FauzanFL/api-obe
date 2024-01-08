@@ -11,16 +11,16 @@ type KurikulumRepository interface {
 }
 
 type kurikulumRepository struct {
-	db *gorm.DB
+	dbKurikulum *gorm.DB
 }
 
-func NewKurikulumRepo(db *gorm.DB) KurikulumRepository {
-	return &kurikulumRepository{db}
+func NewKurikulumRepo(dbKurikulum *gorm.DB) KurikulumRepository {
+	return &kurikulumRepository{dbKurikulum}
 }
 
 func (k *kurikulumRepository) GetKurikulum() ([]model.Kurikulum, error) {
 	var kurikulum []model.Kurikulum
-	err := k.db.Find(&kurikulum).Error
+	err := k.dbKurikulum.Find(&kurikulum).Error
 	if err != nil {
 		return []model.Kurikulum{}, err
 	}

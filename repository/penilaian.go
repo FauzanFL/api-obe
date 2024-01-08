@@ -8,21 +8,58 @@ import (
 
 type PenilaianRepository interface {
 	GetPenilaian() ([]model.Penilaian, error)
+	GetPenilaianById(id int) (model.Penilaian, error)
+	CreatePenilaian(penilaian model.Penilaian) error
+	UpdatePenilaian(penilaian model.Penilaian) error
+	DeletePenilaian(id int) error
 }
 
 type penilaianRepository struct {
-	db *gorm.DB
+	dbPenilaian *gorm.DB
 }
 
-func NewPenilaianRepo(db *gorm.DB) PenilaianRepository {
-	return &penilaianRepository{db}
+func NewPenilaianRepo(dbPenilaian *gorm.DB) PenilaianRepository {
+	return &penilaianRepository{dbPenilaian}
 }
 
-func (m *penilaianRepository) GetPenilaian() ([]model.Penilaian, error) {
+func (p *penilaianRepository) GetPenilaian() ([]model.Penilaian, error) {
 	var penilaian []model.Penilaian
-	err := m.db.Find(&penilaian).Error
+	err := p.dbPenilaian.Find(&penilaian).Error
 	if err != nil {
 		return []model.Penilaian{}, err
 	}
 	return penilaian, nil
+}
+
+func (p *penilaianRepository) GetPenilaianById(id int) (model.Penilaian, error) {
+	var penilaian model.Penilaian
+	err := p.dbPenilaian.First(&penilaian, id).Error
+	if err != nil {
+		return model.Penilaian{}, err
+	}
+	return penilaian, nil
+}
+
+func (p *penilaianRepository) CreatePenilaian(penilaian model.Penilaian) error {
+	err := p.dbPenilaian.Create(&penilaian).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *penilaianRepository) UpdatePenilaian(penilaian model.Penilaian) error {
+	err := p.dbPenilaian.Save(&penilaian).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *penilaianRepository) DeletePenilaian(id int) error {
+	err := p.dbPenilaian.Delete(&model.Penilaian{}, id).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

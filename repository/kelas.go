@@ -11,16 +11,16 @@ type KelasRepository interface {
 }
 
 type kelasRepository struct {
-	db *gorm.DB
+	dbPenilaian *gorm.DB
 }
 
-func NewKelasRepo(db *gorm.DB) KelasRepository {
-	return &kelasRepository{db}
+func NewKelasRepo(dbPenilaian *gorm.DB) KelasRepository {
+	return &kelasRepository{dbPenilaian}
 }
 
 func (k *kelasRepository) GetKelas() ([]model.Kelas, error) {
 	var kelas []model.Kelas
-	err := k.db.Find(&kelas).Error
+	err := k.dbPenilaian.Find(&kelas).Error
 	if err != nil {
 		return []model.Kelas{}, err
 	}
