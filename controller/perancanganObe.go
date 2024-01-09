@@ -61,11 +61,11 @@ func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 		return
 	}
 	if body.Nama == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "nama is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama can't be empty"})
 		return
 	}
 	if body.KurikulumID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id can't be empty"})
 		return
 	}
 
@@ -80,15 +80,15 @@ func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 }
 
 func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
+	var body struct {
+		Nama        string `json:"nama" binding:"required"`
+		KurikulumID int    `json:"kurikulum_id" binding:"required"`
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	var body struct {
-		Nama        string `json:"nama" binding:"required"`
-		KurikulumID int    `json:"kurikulum_id" binding:"required"`
 	}
 
 	if err := c.Bind(&body); err != nil {
@@ -96,11 +96,11 @@ func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
 		return
 	}
 	if body.Nama == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "nama is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama can't be empty"})
 		return
 	}
 	if body.KurikulumID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kurikulum_id can't be empty"})
 		return
 	}
 
@@ -126,5 +126,5 @@ func (m *perancanganObeController) DeletePerancanganObe(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusNoContent, nil)
+	c.JSON(http.StatusOK, gin.H{"message": "Perancangan OBE deleted successfully"})
 }

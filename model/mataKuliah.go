@@ -6,6 +6,7 @@ type MataKuliah struct {
 	Nama      string `json:"nama"`
 	Deskripsi string `json:"deskripsi"`
 	Sks       int    `json:"sks"`
+	Semester  int    `json:"semester"`
 	OBEId     int    `json:"obe_id"`
 }
 

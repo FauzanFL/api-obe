@@ -49,11 +49,11 @@ func (u *userController) AddUser(c *gin.Context) {
 		return
 	}
 	if body.Email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email can't be empty"})
 		return
 	}
 	if body.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "password is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "password can't be empty"})
 		return
 	}
 
@@ -102,11 +102,11 @@ func (u *userController) UpdateUser(c *gin.Context) {
 		return
 	}
 	if body.Email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email can't be empty"})
 		return
 	}
 	if body.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "password is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "password can't be empty"})
 		return
 	}
 
@@ -141,7 +141,7 @@ func (u *userController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Delete Account Successful"})
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted Successful"})
 }
 
 func (u *userController) Login(c *gin.Context) {
@@ -154,11 +154,11 @@ func (u *userController) Login(c *gin.Context) {
 		return
 	}
 	if body.Email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email can't be empty"})
 		return
 	}
 	if body.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "password is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "password can't be empty"})
 		return
 	}
 
