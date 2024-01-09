@@ -18,8 +18,6 @@ func init() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	// Initialize database connections during program startup.
-	// Define your database configurations
 	dbConfigs := []db.DBConfig{
 		{
 			IdentificationName: os.Getenv("DB_KURIKULUM_IDENTIFICATION_NAME"),

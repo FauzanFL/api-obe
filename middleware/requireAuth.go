@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"api-obe/model"
 	"api-obe/repository"
 	"fmt"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 
 type AuthMiddleware interface {
 	RequireAuth(c *gin.Context)
+	RequireAdminAuth(c *gin.Context)
+	RequireDosenAuth(c *gin.Context)
 }
 
 type authMiddleware struct {
@@ -61,4 +64,42 @@ func (am *authMiddleware) RequireAuth(c *gin.Context) {
 	} else {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
+}
+
+func (am *authMiddleware) RequireAdminAuth(c *gin.Context) {
+	am.RequireAuth(c)
+
+	user, exists := c.Get("user")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	userExist := user.(model.User)
+
+	if userExist.Role != "admin" {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	c.Next()
+}
+
+func (am *authMiddleware) RequireDosenAuth(c *gin.Context) {
+	am.RequireAuth(c)
+
+	user, exists := c.Get("user")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	userExist := user.(model.User)
+
+	if userExist.Role != "dosen" {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	c.Next()
 }
