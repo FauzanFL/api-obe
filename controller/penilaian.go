@@ -1,12 +1,18 @@
 package controller
 
 import (
+	"api-obe/db"
 	"api-obe/model"
 	repo "api-obe/repository"
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/option"
 )
 
 type PenilaianController interface {
@@ -171,5 +177,41 @@ func (p *penilaianController) DeletePenilaian(c *gin.Context) {
 }
 
 func (p *penilaianController) UploadEvidence(c *gin.Context) {
+	ctx := context.Background()
+
+	client := db.ServiceAccount("client_secret.json")
+
+	srv, err := drive.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Drive client: %v", err)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer f.Close()
+
+	fmt.Println(file.Filename)
+
+	fileMetadata := &drive.File{
+		MimeType: "application/octet-stream",
+		Name:     file.Filename,
+		Parents:  []string{"1nFGLiS9VIdTN5KIZn-Cfxg5s6rEymsET"},
+	}
+
+	_, err = srv.Files.Create(fileMetadata).Media(f).Do()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
 }
