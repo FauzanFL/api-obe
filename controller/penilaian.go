@@ -18,6 +18,7 @@ import (
 type PenilaianController interface {
 	GetPenilaian(c *gin.Context)
 	GetPenilaianById(c *gin.Context)
+	GetPenilaianByKelas(c *gin.Context)
 	CreatePenilaian(c *gin.Context)
 	UpdatePenilaian(c *gin.Context)
 	DeletePenilaian(c *gin.Context)
@@ -50,6 +51,20 @@ func (p *penilaianController) GetPenilaianById(c *gin.Context) {
 		return
 	}
 	penilaian, err := p.penilaianRepo.GetPenilaianById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, penilaian)
+}
+
+func (p *penilaianController) GetPenilaianByKelas(c *gin.Context) {
+	kelasId, err := strconv.Atoi(c.Param("kelasId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	penilaian, err := p.penilaianRepo.GetPenilaianByKelas(kelasId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

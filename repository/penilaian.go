@@ -9,6 +9,7 @@ import (
 type PenilaianRepository interface {
 	GetPenilaian() ([]model.Penilaian, error)
 	GetPenilaianById(id int) (model.Penilaian, error)
+	GetPenilaianByKelas(kelasId int) ([]model.Penilaian, error)
 	CreatePenilaian(penilaian model.Penilaian) error
 	UpdatePenilaian(penilaian model.Penilaian) error
 	DeletePenilaian(id int) error
@@ -36,6 +37,15 @@ func (p *penilaianRepository) GetPenilaianById(id int) (model.Penilaian, error) 
 	err := p.dbPenilaian.First(&penilaian, id).Error
 	if err != nil {
 		return model.Penilaian{}, err
+	}
+	return penilaian, nil
+}
+
+func (p *penilaianRepository) GetPenilaianByKelas(kelasId int) ([]model.Penilaian, error) {
+	var penilaian []model.Penilaian
+	err := p.dbPenilaian.Where("mhs_id IN ?", p.dbPenilaian.Table("mahasiswa").Where("kelas_id = ?", kelasId).Select("id")).Find(&penilaian).Error
+	if err != nil {
+		return []model.Penilaian{}, err
 	}
 	return penilaian, nil
 }

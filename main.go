@@ -79,7 +79,7 @@ func main() {
 
 	authMiddleware := middleware.NewAuthMiddleware(userRepo)
 
-	userController := controller.NewUserController(userRepo)
+	userController := controller.NewUserController(userRepo, dosenRepo)
 	perancanganObeController := controller.NewPerancanganObeController(perancanganObeRepo)
 	ploController := controller.NewPloController(ploRepo)
 	cloController := controller.NewCloController(cloRepo)
@@ -193,6 +193,7 @@ func main() {
 	{
 		penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
 		penilaianRouter.GET("/:id", authMiddleware.RequireAuth, penilaianController.GetPenilaianById)
+		penilaianRouter.GET("/kelas/:kelasid", authMiddleware.RequireAuth, penilaianController.GetPenilaianByKelas)
 		penilaianRouter.POST("/", authMiddleware.RequireAuth, penilaianController.CreatePenilaian)
 		penilaianRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, penilaianController.DeletePenilaian)
 		penilaianRouter.PUT("/update/:id", authMiddleware.RequireAuth, penilaianController.UpdatePenilaian)
@@ -219,6 +220,8 @@ func main() {
 	mahasiswaRouter := r.Group("/mahasiswa")
 	{
 		mahasiswaRouter.GET("/", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswa)
+		mahasiswaRouter.GET("/mata_kuliah/:mkId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByMataKuliah)
+		mahasiswaRouter.POST("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
 	}
 
 	r.GET("/", func(c *gin.Context) {

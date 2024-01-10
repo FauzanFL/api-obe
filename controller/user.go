@@ -23,11 +23,12 @@ type UserController interface {
 }
 
 type userController struct {
-	userRepo repo.UserRepository
+	userRepo  repo.UserRepository
+	dosenRepo repo.DosenRepository
 }
 
-func NewUserController(userRepo repo.UserRepository) UserController {
-	return &userController{userRepo}
+func NewUserController(userRepo repo.UserRepository, dosenRepo repo.DosenRepository) UserController {
+	return &userController{userRepo, dosenRepo}
 }
 
 func (u *userController) GetUser(c *gin.Context) {
@@ -41,8 +42,10 @@ func (u *userController) GetUser(c *gin.Context) {
 
 func (u *userController) AddUser(c *gin.Context) {
 	var body struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
+		Email     string `json:"email" binding:"required"`
+		Password  string `json:"password" binding:"required"`
+		KodeDosen string `json:"kode_dosen" binding:"required"`
+		Nama      string `json:"nama" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -83,6 +86,23 @@ func (u *userController) AddUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	savedUser, err := u.userRepo.GetUserByEmail(user.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var dosen model.Dosen
+	dosen.Nama = body.Nama
+	dosen.KodeDosen = body.KodeDosen
+	dosen.UserId = savedUser.ID
+
+	if err := u.dosenRepo.Add(dosen); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{"message": "User added successfully"})
 }
 
@@ -94,8 +114,10 @@ func (u *userController) UpdateUser(c *gin.Context) {
 	}
 
 	var body struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
+		Email     string `json:"email" binding:"required"`
+		Password  string `json:"password" binding:"required"`
+		KodeDosen string `json:"kode_dosen" binding:"required"`
+		Nama      string `json:"nama" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -122,6 +144,15 @@ func (u *userController) UpdateUser(c *gin.Context) {
 	user.ID = id
 
 	if err := u.userRepo.Update(user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var dosen model.Dosen
+	dosen.Nama = body.Nama
+	dosen.KodeDosen = body.KodeDosen
+
+	if err := u.dosenRepo.UpdateByUser(dosen, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

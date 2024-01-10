@@ -9,6 +9,9 @@ import (
 type DosenRepository interface {
 	GetDosen() ([]model.Dosen, error)
 	GetDosenById(id int) (model.Dosen, error)
+	Add(dosen model.Dosen) error
+	Delete(id int) error
+	UpdateByUser(dosen model.Dosen, userId int) error
 }
 
 type dosenRepository struct {
@@ -35,4 +38,28 @@ func (d *dosenRepository) GetDosenById(id int) (model.Dosen, error) {
 		return model.Dosen{}, err
 	}
 	return dosen, nil
+}
+
+func (d *dosenRepository) Add(dosen model.Dosen) error {
+	err := d.dbUser.Create(&dosen).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *dosenRepository) Delete(id int) error {
+	err := d.dbUser.Where("id =?", id).Delete(&model.Dosen{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *dosenRepository) UpdateByUser(dosen model.Dosen, userId int) error {
+	err := d.dbUser.Model(&model.Dosen{}).Where("user_id =?", userId).Updates(&dosen).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
