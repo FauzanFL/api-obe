@@ -7,6 +7,7 @@ type BeritaAcara struct {
 	NIM         string  `json:"nim"`
 	Assessment  string  `json:"assessment"`
 	Nilai       float64 `json:"nilai"`
+	PenilaianId int     `json:"penilaian_id"`
 }
 
 func (BeritaAcara) TableName() string {

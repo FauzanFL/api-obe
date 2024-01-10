@@ -9,6 +9,7 @@ import (
 type CloRepository interface {
 	GetClo() ([]model.CLO, error)
 	GetCloById(id int) (model.CLO, error)
+	GetCLOByMkId(mkId int) ([]model.CLO, error)
 	CreateClo(clo model.CLO) error
 	UpdateClo(clo model.CLO) error
 	DeleteClo(id int) error
@@ -36,6 +37,15 @@ func (c *cloRepository) GetCloById(id int) (model.CLO, error) {
 	err := c.dbKurikulum.First(&clo, id).Error
 	if err != nil {
 		return model.CLO{}, err
+	}
+	return clo, nil
+}
+
+func (c *cloRepository) GetCLOByMkId(mkId int) ([]model.CLO, error) {
+	var clo []model.CLO
+	err := c.dbKurikulum.Where("mk_id =?", mkId).Find(&clo).Error
+	if err != nil {
+		return []model.CLO{}, err
 	}
 	return clo, nil
 }

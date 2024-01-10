@@ -39,6 +39,7 @@ func (b *beritaAcaraController) CreateBeritaAcara(c *gin.Context) {
 		NIM         string  `json:"nim" binding:"required"`
 		Assessment  string  `json:"assessment" binding:"required"`
 		Nilai       float64 `json:"nilai" binding:"required"`
+		PenilaianId int     `json:"penilaian_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -60,8 +61,8 @@ func (b *beritaAcaraController) CreateBeritaAcara(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "assessment can't be empty"})
 		return
 	}
-	if body.Nilai == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "nilai can't be empty"})
+	if body.PenilaianId == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "penilaian_id can't be empty"})
 		return
 	}
 

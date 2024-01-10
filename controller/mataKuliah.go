@@ -15,16 +15,20 @@ type MataKuliahController interface {
 	CreateMataKuliah(c *gin.Context)
 	UpdateMataKuliah(c *gin.Context)
 	DeleteMataKuliah(c *gin.Context)
-	PrintKrs(c *gin.Context)
+	GetRPS(c *gin.Context)
 }
 
 type mataKuliahController struct {
 	mataKuliahRepo repo.MataKuliahRepository
+	plottingRepo   repo.PlottingDosenMkRepository
+	dosenRepo      repo.DosenRepository
 }
 
-func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository) MataKuliahController {
+func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository, plottingRepo repo.PlottingDosenMkRepository, dosenRepo repo.DosenRepository) MataKuliahController {
 	return &mataKuliahController{
 		mataKuliahRepo,
+		plottingRepo,
+		dosenRepo,
 	}
 }
 
@@ -58,6 +62,7 @@ func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 		Deskripsi string `json:"deskripsi" binding:"required"`
 		Sks       int    `json:"sks" binding:"required"`
 		Semester  int    `json:"semester" binding:"required"`
+		Prasyarat string `json:"prasyarat"`
 		OBEId     int    `json:"obe_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
@@ -95,6 +100,7 @@ func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 	mataKuliah.Deskripsi = body.Deskripsi
 	mataKuliah.Sks = body.Sks
 	mataKuliah.Semester = body.Semester
+	mataKuliah.Prasyarat = body.Prasyarat
 	mataKuliah.OBEId = body.OBEId
 	if err := m.mataKuliahRepo.CreateMataKuliah(mataKuliah); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -110,6 +116,7 @@ func (m *mataKuliahController) UpdateMataKuliah(c *gin.Context) {
 		Deskripsi string `json:"deskripsi" binding:"required"`
 		Sks       int    `json:"sks" binding:"required"`
 		Semester  int    `json:"semester" binding:"required"`
+		Prasyarat string `json:"prasyarat"`
 		OBEId     int    `json:"obe_id" binding:"required"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
@@ -152,6 +159,7 @@ func (m *mataKuliahController) UpdateMataKuliah(c *gin.Context) {
 	mataKuliah.Deskripsi = body.Deskripsi
 	mataKuliah.Sks = body.Sks
 	mataKuliah.Semester = body.Semester
+	mataKuliah.Prasyarat = body.Prasyarat
 	mataKuliah.OBEId = body.OBEId
 	mataKuliah.ID = id
 	if err := m.mataKuliahRepo.UpdateMataKuliah(mataKuliah); err != nil {
@@ -174,6 +182,57 @@ func (m *mataKuliahController) DeleteMataKuliah(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Mata kuliah deleted successfully"})
 }
 
-func (m *mataKuliahController) PrintKrs(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "KRS printed successfully"})
+func (m *mataKuliahController) GetRPS(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mk, err := m.mataKuliahRepo.GetMataKuliahById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	dosenPlotting, err := m.plottingRepo.GetPlottingDosenByMkId(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var dosenMk []model.Dosen
+	for _, v := range dosenPlotting {
+		dosen, err := m.dosenRepo.GetDosenById(v.DosenId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		dosenMk = append(dosenMk, dosen)
+	}
+
+	plo, err := m.mataKuliahRepo.GetPLOFromMataKuliah(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	clo, err := m.mataKuliahRepo.GetCLOFromMataKuliah(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var rps model.RPS
+	rps.NamaMataKuliah = mk.Nama
+	rps.KodeMataKuliah = mk.KodeMk
+	rps.SKS = mk.Sks
+	rps.Semester = mk.Semester
+	rps.Prasyarat = mk.Prasyarat
+	rps.DeskripsiMataKuliah = mk.Deskripsi
+	rps.DosenPengampu = dosenMk
+	rps.PLO = plo
+	rps.CLO = clo
+
+	c.JSON(http.StatusOK, rps)
 }

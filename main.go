@@ -83,7 +83,7 @@ func main() {
 	ploController := controller.NewPloController(ploRepo)
 	cloController := controller.NewCloController(cloRepo)
 	kurikulumController := controller.NewKurikulumController(kurikulumRepo)
-	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo)
+	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo)
 	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo)
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
@@ -149,7 +149,7 @@ func main() {
 		mataKuliahRouter.POST("/", authMiddleware.RequireAuth, mataKuliahController.CreateMataKuliah)
 		mataKuliahRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, mataKuliahController.DeleteMataKuliah)
 		mataKuliahRouter.PUT("/update/:id", authMiddleware.RequireAuth, mataKuliahController.UpdateMataKuliah)
-		mataKuliahRouter.POST("/print", authMiddleware.RequireAuth, mataKuliahController.PrintKrs)
+		mataKuliahRouter.POST("/rps/:id", authMiddleware.RequireAuth, mataKuliahController.GetRPS)
 	}
 
 	plottingDosenMkRouter := r.Group("/plotting_dosen_mk")

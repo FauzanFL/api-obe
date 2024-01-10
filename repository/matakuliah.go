@@ -9,6 +9,8 @@ import (
 type MataKuliahRepository interface {
 	GetMataKuliah() ([]model.MataKuliah, error)
 	GetMataKuliahById(id int) (model.MataKuliah, error)
+	GetCLOFromMataKuliah(id int) ([]model.CLO, error)
+	GetPLOFromMataKuliah(id int) ([]model.PLO, error)
 	CreateMataKuliah(mataKuliah model.MataKuliah) error
 	UpdateMataKuliah(mataKuliah model.MataKuliah) error
 	DeleteMataKuliah(id int) error
@@ -38,6 +40,24 @@ func (m *mataKuliahRepository) GetMataKuliahById(id int) (model.MataKuliah, erro
 		return model.MataKuliah{}, err
 	}
 	return mataKuliah, nil
+}
+
+func (m *mataKuliahRepository) GetCLOFromMataKuliah(id int) ([]model.CLO, error) {
+	var clo []model.CLO
+	err := m.dbKurikulum.Model(&model.CLO{}).Where("mk_id =?", id).Find(&clo).Error
+	if err != nil {
+		return []model.CLO{}, err
+	}
+	return clo, nil
+}
+
+func (m *mataKuliahRepository) GetPLOFromMataKuliah(id int) ([]model.PLO, error) {
+	var plo []model.PLO
+	err := m.dbKurikulum.Model(&model.PLO{}).Where("id IN ?", m.dbKurikulum.Table("clo").Where("mk_id = ?", id).Select("plo_id")).Find(&plo).Error
+	if err != nil {
+		return []model.PLO{}, err
+	}
+	return plo, nil
 }
 
 func (m *mataKuliahRepository) CreateMataKuliah(mataKuliah model.MataKuliah) error {
