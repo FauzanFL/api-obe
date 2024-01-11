@@ -89,7 +89,7 @@ func main() {
 	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo)
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
-	dosenController := controller.NewDosenController(dosenRepo)
+	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo)
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
 	penilaianController := controller.NewPenilaianController(penilaianRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
@@ -110,6 +110,7 @@ func main() {
 	dosenRouter := r.Group("/dosen")
 	{
 		dosenRouter.GET("/", authMiddleware.RequireAuth, dosenController.GetDosen)
+		dosenRouter.GET("/:id/obe/:obeId", authMiddleware.RequireAuth, dosenController.GetMataKuliahObe)
 	}
 
 	perancanganObeRouter := r.Group("/perancangan_obe")
@@ -155,6 +156,7 @@ func main() {
 	{
 		mataKuliahRouter.GET("/", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliah)
 		mataKuliahRouter.GET("/:id", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahById)
+		mataKuliahRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahByObeId)
 		mataKuliahRouter.POST("/", authMiddleware.RequireAuth, mataKuliahController.CreateMataKuliah)
 		mataKuliahRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, mataKuliahController.DeleteMataKuliah)
 		mataKuliahRouter.PUT("/update/:id", authMiddleware.RequireAuth, mataKuliahController.UpdateMataKuliah)

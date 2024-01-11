@@ -32,7 +32,7 @@ func (p *plottingDosenMkRepository) GetPlottingDosenMk() ([]model.PlottingDosenM
 
 func (p *plottingDosenMkRepository) GetPlottingDosenByMkId(mkId int) ([]model.PlottingDosenMk, error) {
 	var plottingDosenMk []model.PlottingDosenMk
-	err := p.dbKurikulum.Where("mkId =?", mkId).Find(&plottingDosenMk).Error
+	err := p.dbKurikulum.Where("mk_id =?", mkId).Find(&plottingDosenMk).Error
 	if err != nil {
 		return []model.PlottingDosenMk{}, err
 	}

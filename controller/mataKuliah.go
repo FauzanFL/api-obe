@@ -12,6 +12,7 @@ import (
 type MataKuliahController interface {
 	GetMataKuliah(c *gin.Context)
 	GetMataKuliahById(c *gin.Context)
+	GetMataKuliahByObeId(c *gin.Context)
 	CreateMataKuliah(c *gin.Context)
 	UpdateMataKuliah(c *gin.Context)
 	DeleteMataKuliah(c *gin.Context)
@@ -48,6 +49,20 @@ func (m *mataKuliahController) GetMataKuliahById(c *gin.Context) {
 		return
 	}
 	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, mataKuliah)
+}
+
+func (m *mataKuliahController) GetMataKuliahByObeId(c *gin.Context) {
+	obeId, err := strconv.Atoi(c.Param("obeId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeId(obeId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
