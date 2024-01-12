@@ -113,12 +113,19 @@ func (u *userController) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	savedUser, err := u.userRepo.GetUserById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	var body struct {
 		Email     string `json:"email" binding:"required"`
 		Password  string `json:"password" binding:"required"`
-		KodeDosen string `json:"kode_dosen" binding:"required"`
-		Nama      string `json:"nama" binding:"required"`
+		KodeDosen string `json:"kode_dosen"`
+		Nama      string `json:"nama"`
 	}
+
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -148,26 +155,39 @@ func (u *userController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var dosen model.Dosen
-	dosen.Nama = body.Nama
-	dosen.KodeDosen = body.KodeDosen
+	if savedUser.Role == "dosen" {
+		var dosen model.Dosen
+		dosen.Nama = body.Nama
+		dosen.KodeDosen = body.KodeDosen
 
-	if err := u.dosenRepo.UpdateByUser(dosen, id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		if err := u.dosenRepo.UpdateByUser(dosen, id); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
 func (u *userController) DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	idInt, err := strconv.Atoi(id)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := u.userRepo.Delete(idInt); err != nil {
+
+	savedUser, err := u.userRepo.GetUserById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if savedUser.Role == "admin" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Can't delete user admin"})
+		return
+	}
+
+	if err := u.userRepo.Delete(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
