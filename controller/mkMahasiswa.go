@@ -36,8 +36,9 @@ func (m *mkMahasiswaController) GetMkMahasiswa(c *gin.Context) {
 
 func (m *mkMahasiswaController) CreateMkMahasiswa(c *gin.Context) {
 	var body struct {
-		MKId  int `json:"mk_id" binding:"required"`
-		MhsId int `json:"mhs_id" binding:"required"`
+		MKId    int `json:"mk_id" binding:"required"`
+		MhsId   int `json:"mhs_id" binding:"required"`
+		KelasId int `json:"kelas_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -53,6 +54,7 @@ func (m *mkMahasiswaController) CreateMkMahasiswa(c *gin.Context) {
 	var mkMahasiswa model.MkMahasiswa
 	mkMahasiswa.MKId = body.MKId
 	mkMahasiswa.MhsId = body.MhsId
+	mkMahasiswa.KelasId = body.KelasId
 	if err := m.mkMahasiswaRepo.CreateMkMahasiswa(mkMahasiswa); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
