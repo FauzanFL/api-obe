@@ -38,6 +38,7 @@ func (m *plottingDosenMkController) CreatePlottingDosenMk(c *gin.Context) {
 	var body struct {
 		MKId    int `json:"mk_id" binding:"required"`
 		DosenId int `json:"dosen_id" binding:"required"`
+		KelasId int `json:"kelas_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -54,6 +55,7 @@ func (m *plottingDosenMkController) CreatePlottingDosenMk(c *gin.Context) {
 	var plottingDosenMk model.PlottingDosenMk
 	plottingDosenMk.MKId = body.MKId
 	plottingDosenMk.DosenId = body.DosenId
+	plottingDosenMk.KelasId = body.KelasId
 	err := m.plottingDosenMkRepo.CreatePlottingDosenMk(plottingDosenMk)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
