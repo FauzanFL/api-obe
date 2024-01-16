@@ -62,7 +62,6 @@ func main() {
 	perancanganObeRepo := repo.NewPerancanganObeRepo(dbKurikulum)
 	ploRepo := repo.NewPloRepo(dbKurikulum)
 	cloRepo := repo.NewCloRepo(dbKurikulum)
-	ploCloRepo := repo.NewPloCloRepo(dbKurikulum)
 	kurikulumRepo := repo.NewKurikulumRepo(dbKurikulum)
 	mataKuliahRepo := repo.NewMataKuliahRepo(dbKurikulum)
 	plottingDosenRepo := repo.NewPlottingDosenMkRepo(dbKurikulum)
@@ -83,7 +82,6 @@ func main() {
 	perancanganObeController := controller.NewPerancanganObeController(perancanganObeRepo)
 	ploController := controller.NewPloController(ploRepo)
 	cloController := controller.NewCloController(cloRepo)
-	ploCloController := controller.NewPloCloController(ploCloRepo)
 	kurikulumController := controller.NewKurikulumController(kurikulumRepo)
 	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo)
 	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo)
@@ -138,13 +136,6 @@ func main() {
 		cloRouter.POST("/", authMiddleware.RequireAuth, cloController.CreateClo)
 		cloRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, cloController.DeleteClo)
 		cloRouter.PUT("/update/:id", authMiddleware.RequireAuth, cloController.UpdateClo)
-	}
-
-	ploCloRouter := r.Group("/plo_clo")
-	{
-		ploCloRouter.GET("/", authMiddleware.RequireAuth, ploCloController.GetPloClo)
-		ploCloRouter.POST("/", authMiddleware.RequireAuth, ploCloController.CreatePloClo)
-		ploCloRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, ploCloController.DeletePloClo)
 	}
 
 	kurikulumRouter := r.Group("/kurikulum")
