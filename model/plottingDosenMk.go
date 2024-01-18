@@ -7,6 +7,13 @@ type PlottingDosenMk struct {
 	KelasId int `json:"kelas_id"`
 }
 
+type PlotData struct {
+	ID         int    `json:"id"`
+	MataKuliah string `json:"mata_kuliah"`
+	Dosen      string `json:"dosen"`
+	Kelas      string `json:"kelas"`
+}
+
 func (PlottingDosenMk) TableName() string {
 	return "plotting_dosen_mk"
 }

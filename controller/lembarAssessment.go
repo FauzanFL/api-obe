@@ -12,6 +12,7 @@ import (
 type LembarAssessmentController interface {
 	GetLembarAssessment(c *gin.Context)
 	GetLembarAssessmentById(c *gin.Context)
+	GetLembarAssessmentByCloId(c *gin.Context)
 	CreateLembarAssessment(c *gin.Context)
 	UpdateLembarAssessment(c *gin.Context)
 	DeleteLembarAssessment(c *gin.Context)
@@ -43,6 +44,20 @@ func (l *lembarAssessmentController) GetLembarAssessmentById(c *gin.Context) {
 		return
 	}
 	lembarAssessment, err := l.lembarAssessmentRepo.GetLembarAssessmentById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, lembarAssessment)
+}
+
+func (l *lembarAssessmentController) GetLembarAssessmentByCloId(c *gin.Context) {
+	cloId, err := strconv.Atoi(c.Param("cloId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	lembarAssessment, err := l.lembarAssessmentRepo.GetLembarAssessmentByCloId(cloId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

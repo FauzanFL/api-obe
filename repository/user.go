@@ -8,6 +8,7 @@ import (
 
 type UserRepository interface {
 	GetUser() ([]model.User, error)
+	GetUserDosen() ([]model.UserDosen, error)
 	GetUserById(id int) (model.User, error)
 	GetUserByEmail(email string) (model.User, error)
 	Add(user model.User) error
@@ -28,6 +29,15 @@ func (u *userRepository) GetUser() ([]model.User, error) {
 	err := u.db.Find(&users).Error
 	if err != nil {
 		return []model.User{}, err
+	}
+	return users, nil
+}
+
+func (u *userRepository) GetUserDosen() ([]model.UserDosen, error) {
+	var users []model.UserDosen
+	err := u.db.Model(&model.User{}).Select("user.id, user.email, user.password, user.role, dosen.kode_dosen, dosen.nama").Joins("left join dosen ON dosen.user_id = user.id").Scan(&users).Error
+	if err != nil {
+		return []model.UserDosen{}, err
 	}
 	return users, nil
 }

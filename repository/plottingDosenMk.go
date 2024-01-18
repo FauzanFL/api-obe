@@ -8,6 +8,7 @@ import (
 
 type PlottingDosenMkRepository interface {
 	GetPlottingDosenMk() ([]model.PlottingDosenMk, error)
+	GetPlottingDosenMkByObeId(obeId int) ([]model.PlottingDosenMk, error)
 	GetPlottingDosenByMkId(mkId int) ([]model.PlottingDosenMk, error)
 	CreatePlottingDosenMk(plottingDosenMk model.PlottingDosenMk) error
 	DeletePlottingDosenMk(id int) error
@@ -24,6 +25,15 @@ func NewPlottingDosenMkRepo(dbKurikulum *gorm.DB) PlottingDosenMkRepository {
 func (p *plottingDosenMkRepository) GetPlottingDosenMk() ([]model.PlottingDosenMk, error) {
 	var plottingDosenMk []model.PlottingDosenMk
 	err := p.dbKurikulum.Find(&plottingDosenMk).Error
+	if err != nil {
+		return []model.PlottingDosenMk{}, err
+	}
+	return plottingDosenMk, nil
+}
+
+func (p *plottingDosenMkRepository) GetPlottingDosenMkByObeId(obeId int) ([]model.PlottingDosenMk, error) {
+	var plottingDosenMk []model.PlottingDosenMk
+	err := p.dbKurikulum.Where("mk_id IN (?)", p.dbKurikulum.Model(&model.MataKuliah{}).Select("id").Where("obe_id = ?", obeId)).Find(&plottingDosenMk).Error
 	if err != nil {
 		return []model.PlottingDosenMk{}, err
 	}

@@ -8,6 +8,7 @@ import (
 
 type KelasRepository interface {
 	GetKelas() ([]model.Kelas, error)
+	GetKelasById(id int) (model.Kelas, error)
 }
 
 type kelasRepository struct {
@@ -23,6 +24,15 @@ func (k *kelasRepository) GetKelas() ([]model.Kelas, error) {
 	err := k.dbPenilaian.Find(&kelas).Error
 	if err != nil {
 		return []model.Kelas{}, err
+	}
+	return kelas, nil
+}
+
+func (k *kelasRepository) GetKelasById(id int) (model.Kelas, error) {
+	var kelas model.Kelas
+	err := k.dbPenilaian.Where("id = ?", id).First(&kelas).Error
+	if err != nil {
+		return model.Kelas{}, err
 	}
 	return kelas, nil
 }

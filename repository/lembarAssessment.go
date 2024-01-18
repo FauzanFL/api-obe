@@ -9,6 +9,7 @@ import (
 type LembarAssessmentRepository interface {
 	GetLembarAssessment() ([]model.LembarAssessment, error)
 	GetLembarAssessmentById(id int) (model.LembarAssessment, error)
+	GetLembarAssessmentByCloId(cLoId int) ([]model.LembarAssessment, error)
 	CreateLembarAssessment(lembarAssessment model.LembarAssessment) error
 	UpdateLembarAssessment(lembarAssessment model.LembarAssessment) error
 	DeleteLembarAssessment(id int) error
@@ -36,6 +37,15 @@ func (l *lembarAssessmentRepository) GetLembarAssessmentById(id int) (model.Lemb
 	err := l.dbKurikulum.First(&lembarAssessment, id).Error
 	if err != nil {
 		return model.LembarAssessment{}, err
+	}
+	return lembarAssessment, nil
+}
+
+func (l *lembarAssessmentRepository) GetLembarAssessmentByCloId(cloId int) ([]model.LembarAssessment, error) {
+	var lembarAssessment []model.LembarAssessment
+	err := l.dbKurikulum.Where("clo_id = ?", cloId).First(&lembarAssessment).Error
+	if err != nil {
+		return []model.LembarAssessment{}, err
 	}
 	return lembarAssessment, nil
 }

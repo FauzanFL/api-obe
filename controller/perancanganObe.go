@@ -11,6 +11,7 @@ import (
 
 type PerancanganObeController interface {
 	GetPerancanganObe(c *gin.Context)
+	GetActivePerancanganObe(c *gin.Context)
 	GetPerancanganObeById(c *gin.Context)
 	CreatePerancanganObe(c *gin.Context)
 	UpdatePerancanganObe(c *gin.Context)
@@ -29,6 +30,15 @@ func NewPerancanganObeController(perancanganObeRepo repo.PerancanganObeRepositor
 
 func (m *perancanganObeController) GetPerancanganObe(c *gin.Context) {
 	perancanganObe, err := m.perancanganObeRepo.GetPerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, perancanganObe)
+}
+
+func (m *perancanganObeController) GetActivePerancanganObe(c *gin.Context) {
+	perancanganObe, err := m.perancanganObeRepo.GetActivePerancanganObe()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -56,6 +57,15 @@ func init() {
 
 func main() {
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "User-Agent", "Referrer", "Host", "Token", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowMethods:     []string{"PUT", "POST", "GET", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		AllowOrigins:     []string{"*"},
+	}))
+
 	dbUser := db.GetDBConnection(os.Getenv("DB_USER_IDENTIFICATION_NAME"))
 	dbKurikulum := db.GetDBConnection(os.Getenv("DB_KURIKULUM_IDENTIFICATION_NAME"))
 	dbPenilaian := db.GetDBConnection(os.Getenv("DB_PENILAIAN_IDENTIFICATION_NAME"))
@@ -84,10 +94,10 @@ func main() {
 	cloController := controller.NewCloController(cloRepo)
 	kurikulumController := controller.NewKurikulumController(kurikulumRepo)
 	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo)
-	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo)
+	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo, perancanganObeRepo, dosenRepo, kelasRepo, mataKuliahRepo)
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
-	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo)
+	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
 	penilaianController := controller.NewPenilaianController(penilaianRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
@@ -95,126 +105,133 @@ func main() {
 	kelasController := controller.NewKelasController(kelasRepo)
 	mahasiswaController := controller.NewMahasiswaController(mahasiswaRepo)
 
-	userRouter := r.Group("/users")
+	apiRouter := r.Group("/api")
 	{
-		userRouter.GET("/", authMiddleware.RequireAuth, userController.GetUser)
-		userRouter.POST("/", authMiddleware.RequireAuth, userController.AddUser)
-		userRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, userController.DeleteUser)
-		userRouter.PUT("/update/:id", authMiddleware.RequireAuth, userController.UpdateUser)
-		userRouter.POST("/login", userController.Login)
-		userRouter.GET("/logout", authMiddleware.RequireAuth, userController.Logout)
-	}
+		userRouter := apiRouter.Group("/users")
+		{
+			userRouter.GET("/", authMiddleware.RequireAdminAuth, userController.GetUser)
+			userRouter.GET("/dosen", authMiddleware.RequireAdminAuth, userController.GetUserDosen)
+			userRouter.POST("/", authMiddleware.RequireAdminAuth, userController.AddUser)
+			userRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, userController.DeleteUser)
+			userRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, userController.UpdateUser)
+			userRouter.POST("/login", userController.Login)
+			userRouter.GET("/logout", authMiddleware.RequireAuth, userController.Logout)
+		}
 
-	dosenRouter := r.Group("/dosen")
-	{
-		dosenRouter.GET("/", authMiddleware.RequireAuth, dosenController.GetDosen)
-		dosenRouter.GET("/:id/obe/:obeId", authMiddleware.RequireAuth, dosenController.GetMataKuliahObe)
-	}
+		dosenRouter := apiRouter.Group("/dosen")
+		{
+			dosenRouter.GET("/", authMiddleware.RequireAdminAuth, dosenController.GetDosen)
+			dosenRouter.GET("/mata_kuliah", authMiddleware.RequireDosenAuth, dosenController.GetMataKuliah)
+		}
 
-	perancanganObeRouter := r.Group("/perancangan_obe")
-	{
-		perancanganObeRouter.GET("/", authMiddleware.RequireAuth, perancanganObeController.GetPerancanganObe)
-		perancanganObeRouter.GET("/:id", authMiddleware.RequireAuth, perancanganObeController.GetPerancanganObeById)
-		perancanganObeRouter.POST("/", authMiddleware.RequireAuth, perancanganObeController.CreatePerancanganObe)
-		perancanganObeRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, perancanganObeController.DeletePerancanganObe)
-		perancanganObeRouter.PUT("/update/:id", authMiddleware.RequireAuth, perancanganObeController.UpdatePerancanganObe)
-	}
+		perancanganObeRouter := apiRouter.Group("/perancangan_obe")
+		{
+			perancanganObeRouter.GET("/", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObe)
+			perancanganObeRouter.GET("/active", authMiddleware.RequireAdminAuth, perancanganObeController.GetActivePerancanganObe)
+			perancanganObeRouter.GET("/:id", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObeById)
+			perancanganObeRouter.POST("/", authMiddleware.RequireAdminAuth, perancanganObeController.CreatePerancanganObe)
+			perancanganObeRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, perancanganObeController.DeletePerancanganObe)
+			perancanganObeRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, perancanganObeController.UpdatePerancanganObe)
+		}
 
-	ploRouter := r.Group("/plo")
-	{
-		ploRouter.GET("/", authMiddleware.RequireAuth, ploController.GetPlo)
-		ploRouter.GET("/:id", authMiddleware.RequireAuth, ploController.GetPloById)
-		ploRouter.POST("/", authMiddleware.RequireAuth, ploController.CreatePlo)
-		ploRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, ploController.DeletePlo)
-		ploRouter.PUT("/update/:id", authMiddleware.RequireAuth, ploController.UpdatePlo)
-	}
+		ploRouter := apiRouter.Group("/plo")
+		{
+			ploRouter.GET("/", authMiddleware.RequireAuth, ploController.GetPlo)
+			ploRouter.GET("/:id", authMiddleware.RequireAuth, ploController.GetPloById)
+			ploRouter.POST("/", authMiddleware.RequireAdminAuth, ploController.CreatePlo)
+			ploRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, ploController.DeletePlo)
+			ploRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, ploController.UpdatePlo)
+		}
 
-	cloRouter := r.Group("/clo")
-	{
-		cloRouter.GET("/", authMiddleware.RequireAuth, cloController.GetClo)
-		cloRouter.GET("/:id", authMiddleware.RequireAuth, cloController.GetCloById)
-		cloRouter.POST("/", authMiddleware.RequireAuth, cloController.CreateClo)
-		cloRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, cloController.DeleteClo)
-		cloRouter.PUT("/update/:id", authMiddleware.RequireAuth, cloController.UpdateClo)
-	}
+		cloRouter := apiRouter.Group("/clo")
+		{
+			cloRouter.GET("/", authMiddleware.RequireAuth, cloController.GetClo)
+			cloRouter.GET("/:id", authMiddleware.RequireAuth, cloController.GetCloById)
+			cloRouter.GET("/mk/:mkId", authMiddleware.RequireAuth, cloController.GetCloByMkId)
+			cloRouter.POST("/", authMiddleware.RequireDosenAuth, cloController.CreateClo)
+			cloRouter.DELETE("/delete/:id", authMiddleware.RequireDosenAuth, cloController.DeleteClo)
+			cloRouter.PUT("/update/:id", authMiddleware.RequireDosenAuth, cloController.UpdateClo)
+		}
 
-	kurikulumRouter := r.Group("/kurikulum")
-	{
-		kurikulumRouter.GET("/", authMiddleware.RequireAuth, kurikulumController.GetKurikulum)
-	}
+		kurikulumRouter := apiRouter.Group("/kurikulum")
+		{
+			kurikulumRouter.GET("/", authMiddleware.RequireAdminAuth, kurikulumController.GetKurikulum)
+		}
 
-	mataKuliahRouter := r.Group("/mata_kuliah")
-	{
-		mataKuliahRouter.GET("/", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliah)
-		mataKuliahRouter.GET("/:id", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahById)
-		mataKuliahRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahByObeId)
-		mataKuliahRouter.POST("/", authMiddleware.RequireAuth, mataKuliahController.CreateMataKuliah)
-		mataKuliahRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, mataKuliahController.DeleteMataKuliah)
-		mataKuliahRouter.PUT("/update/:id", authMiddleware.RequireAuth, mataKuliahController.UpdateMataKuliah)
-		mataKuliahRouter.POST("/rps/:id", authMiddleware.RequireAuth, mataKuliahController.GetRPS)
-	}
+		mataKuliahRouter := apiRouter.Group("/mata_kuliah")
+		{
+			mataKuliahRouter.GET("/", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliah)
+			mataKuliahRouter.GET("/:id", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahById)
+			mataKuliahRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahByObeId)
+			mataKuliahRouter.POST("/", authMiddleware.RequireAdminAuth, mataKuliahController.CreateMataKuliah)
+			mataKuliahRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, mataKuliahController.DeleteMataKuliah)
+			mataKuliahRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, mataKuliahController.UpdateMataKuliah)
+			mataKuliahRouter.GET("/rps/:id", authMiddleware.RequireAuth, mataKuliahController.GetRPS)
+		}
 
-	plottingDosenMkRouter := r.Group("/plotting_dosen_mk")
-	{
-		plottingDosenMkRouter.GET("/", authMiddleware.RequireAuth, plottingDosenController.GetPlottingDosenMk)
-		plottingDosenMkRouter.POST("/", authMiddleware.RequireAuth, plottingDosenController.CreatePlottingDosenMk)
-		plottingDosenMkRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, plottingDosenController.DeletePlottingDosenMk)
-	}
+		plottingDosenMkRouter := apiRouter.Group("/plotting_dosen_mk")
+		{
+			plottingDosenMkRouter.GET("/", authMiddleware.RequireAdminAuth, plottingDosenController.GetPlottingDosenMk)
+			plottingDosenMkRouter.POST("/", authMiddleware.RequireAdminAuth, plottingDosenController.CreatePlottingDosenMk)
+			plottingDosenMkRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, plottingDosenController.DeletePlottingDosenMk)
+		}
 
-	lembarAssessmentRouter := r.Group("/lembar_assessment")
-	{
-		lembarAssessmentRouter.GET("/", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessment)
-		lembarAssessmentRouter.GET("/:id", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentById)
-		lembarAssessmentRouter.POST("/", authMiddleware.RequireAuth, lembarAssessmentController.CreateLembarAssessment)
-		lembarAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, lembarAssessmentController.DeleteLembarAssessment)
-		lembarAssessmentRouter.PUT("/update/:id", authMiddleware.RequireAuth, lembarAssessmentController.UpdateLembarAssessment)
-	}
+		lembarAssessmentRouter := apiRouter.Group("/lembar_assessment")
+		{
+			lembarAssessmentRouter.GET("/", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessment)
+			lembarAssessmentRouter.GET("/:id", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentById)
+			lembarAssessmentRouter.GET("/clo/:cloId", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentByCloId)
+			lembarAssessmentRouter.POST("/", authMiddleware.RequireAuth, lembarAssessmentController.CreateLembarAssessment)
+			lembarAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, lembarAssessmentController.DeleteLembarAssessment)
+			lembarAssessmentRouter.PUT("/update/:id", authMiddleware.RequireAuth, lembarAssessmentController.UpdateLembarAssessment)
+		}
 
-	jenisAssessmentRouter := r.Group("/jenis_assessment")
-	{
-		jenisAssessmentRouter.GET("/", authMiddleware.RequireAuth, jenisAssessmentController.GetJenisAssessment)
-		jenisAssessmentRouter.POST("/", authMiddleware.RequireAuth, jenisAssessmentController.CreateJenisAssessment)
-		jenisAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, jenisAssessmentController.DeleteJenisAssessment)
-	}
+		jenisAssessmentRouter := apiRouter.Group("/jenis_assessment")
+		{
+			jenisAssessmentRouter.GET("/", authMiddleware.RequireAuth, jenisAssessmentController.GetJenisAssessment)
+			jenisAssessmentRouter.POST("/", authMiddleware.RequireAuth, jenisAssessmentController.CreateJenisAssessment)
+			jenisAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, jenisAssessmentController.DeleteJenisAssessment)
+		}
 
-	mkMahasiswaRouter := r.Group("/mk_mahasiswa")
-	{
-		mkMahasiswaRouter.GET("/", authMiddleware.RequireAuth, mkMahasiswaController.GetMkMahasiswa)
-	}
+		mkMahasiswaRouter := apiRouter.Group("/mk_mahasiswa")
+		{
+			mkMahasiswaRouter.GET("/", authMiddleware.RequireAuth, mkMahasiswaController.GetMkMahasiswa)
+		}
 
-	penilaianRouter := r.Group("/penilaian")
-	{
-		penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
-		penilaianRouter.GET("/:id", authMiddleware.RequireAuth, penilaianController.GetPenilaianById)
-		penilaianRouter.GET("/kelas/:kelasid", authMiddleware.RequireAuth, penilaianController.GetPenilaianByKelas)
-		penilaianRouter.POST("/", authMiddleware.RequireAuth, penilaianController.CreatePenilaian)
-		penilaianRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, penilaianController.DeletePenilaian)
-		penilaianRouter.PUT("/update/:id", authMiddleware.RequireAuth, penilaianController.UpdatePenilaian)
-		penilaianRouter.POST("/upload", authMiddleware.RequireAuth, penilaianController.UploadEvidence)
-	}
+		penilaianRouter := apiRouter.Group("/penilaian")
+		{
+			penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
+			penilaianRouter.GET("/:id", authMiddleware.RequireAuth, penilaianController.GetPenilaianById)
+			penilaianRouter.GET("/kelas/:kelasid", authMiddleware.RequireAuth, penilaianController.GetPenilaianByKelas)
+			penilaianRouter.POST("/", authMiddleware.RequireDosenAuth, penilaianController.CreatePenilaian)
+			penilaianRouter.DELETE("/delete/:id", authMiddleware.RequireDosenAuth, penilaianController.DeletePenilaian)
+			penilaianRouter.PUT("/update/:id", authMiddleware.RequireDosenAuth, penilaianController.UpdatePenilaian)
+			penilaianRouter.POST("/upload", authMiddleware.RequireDosenAuth, penilaianController.UploadEvidence)
+		}
 
-	tahunAjaranRouter := r.Group("/tahun_ajaran")
-	{
-		tahunAjaranRouter.GET("/", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaran)
-	}
+		tahunAjaranRouter := apiRouter.Group("/tahun_ajaran")
+		{
+			tahunAjaranRouter.GET("/", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaran)
+		}
 
-	beritaAcaraRouter := r.Group("/berita_acara")
-	{
-		beritaAcaraRouter.GET("/", authMiddleware.RequireAuth, beritaAcaraController.GetBeritaAcara)
-		beritaAcaraRouter.POST("/", authMiddleware.RequireAuth, beritaAcaraController.CreateBeritaAcara)
-		beritaAcaraRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, beritaAcaraController.DeleteBeritaAcara)
-	}
+		beritaAcaraRouter := apiRouter.Group("/berita_acara")
+		{
+			beritaAcaraRouter.GET("/", authMiddleware.RequireAuth, beritaAcaraController.GetBeritaAcara)
+			beritaAcaraRouter.POST("/", authMiddleware.RequireAuth, beritaAcaraController.CreateBeritaAcara)
+			beritaAcaraRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, beritaAcaraController.DeleteBeritaAcara)
+		}
 
-	kelasRouter := r.Group("/kelas")
-	{
-		kelasRouter.GET("/", authMiddleware.RequireAuth, kelasController.GetKelas)
-	}
+		kelasRouter := apiRouter.Group("/kelas")
+		{
+			kelasRouter.GET("/", authMiddleware.RequireAuth, kelasController.GetKelas)
+		}
 
-	mahasiswaRouter := r.Group("/mahasiswa")
-	{
-		mahasiswaRouter.GET("/", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswa)
-		mahasiswaRouter.GET("/mata_kuliah/:mkId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByMataKuliah)
-		mahasiswaRouter.POST("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
+		mahasiswaRouter := apiRouter.Group("/mahasiswa")
+		{
+			mahasiswaRouter.GET("/", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswa)
+			mahasiswaRouter.GET("/mata_kuliah/:mkId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByMataKuliah)
+			mahasiswaRouter.POST("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
+		}
 	}
 
 	r.GET("/", func(c *gin.Context) {

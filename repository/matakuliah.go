@@ -73,7 +73,7 @@ func (m *mataKuliahRepository) GetMataKuliahByObeId(obeId int) ([]model.MataKuli
 
 func (m *mataKuliahRepository) GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error) {
 	var mataKuliah []model.MataKuliah
-	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN ?", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id")).Find(&mataKuliah).Error
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN (?)", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id")).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}

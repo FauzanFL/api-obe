@@ -17,21 +17,48 @@ type PlottingDosenMkController interface {
 
 type plottingDosenMkController struct {
 	plottingDosenMkRepo repo.PlottingDosenMkRepository
+	perancanganRepo     repo.PerancanganObeRepository
+	dosenRepo           repo.DosenRepository
+	kelasRepo           repo.KelasRepository
+	mataKuliahRepo      repo.MataKuliahRepository
 }
 
-func NewPlottingDosenMkController(plottingDosenMkRepo repo.PlottingDosenMkRepository) PlottingDosenMkController {
+func NewPlottingDosenMkController(plottingDosenMkRepo repo.PlottingDosenMkRepository, perancanganRepo repo.PerancanganObeRepository, dosenRepo repo.DosenRepository, kelasRepo repo.KelasRepository, mataKuliahRepo repo.MataKuliahRepository) PlottingDosenMkController {
 	return &plottingDosenMkController{
 		plottingDosenMkRepo,
+		perancanganRepo,
+		dosenRepo,
+		kelasRepo,
+		mataKuliahRepo,
 	}
 }
 
 func (m *plottingDosenMkController) GetPlottingDosenMk(c *gin.Context) {
-	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMk()
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, plottingDosenMk)
+
+	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeId(obe.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var plotDatas []model.PlotData
+	for _, v := range plottingDosenMk {
+		var plot model.PlotData
+		dosen, _ := m.dosenRepo.GetDosenById(v.DosenId)
+		kelas, _ := m.kelasRepo.GetKelasById(v.KelasId)
+		mk, _ := m.mataKuliahRepo.GetMataKuliahById(v.MKId)
+		plot.Dosen = dosen.KodeDosen
+		plot.Kelas = kelas.KodeKelas
+		plot.MataKuliah = mk.KodeMk
+		plotDatas = append(plotDatas, plot)
+	}
+
+	c.JSON(http.StatusOK, plotDatas)
 }
 
 func (m *plottingDosenMkController) CreatePlottingDosenMk(c *gin.Context) {

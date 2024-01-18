@@ -12,6 +12,7 @@ import (
 type CloController interface {
 	GetClo(c *gin.Context)
 	GetCloById(c *gin.Context)
+	GetCloByMkId(c *gin.Context)
 	CreateClo(c *gin.Context)
 	UpdateClo(c *gin.Context)
 	DeleteClo(c *gin.Context)
@@ -42,6 +43,21 @@ func (cl *cloController) GetCloById(c *gin.Context) {
 	}
 
 	clo, err := cl.cloRepo.GetCloById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, clo)
+}
+
+func (cl *cloController) GetCloByMkId(c *gin.Context) {
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	clo, err := cl.cloRepo.GetCLOByMkId(mkId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

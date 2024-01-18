@@ -15,6 +15,7 @@ import (
 
 type UserController interface {
 	GetUser(c *gin.Context)
+	GetUserDosen(c *gin.Context)
 	AddUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
@@ -33,6 +34,15 @@ func NewUserController(userRepo repo.UserRepository, dosenRepo repo.DosenReposit
 
 func (u *userController) GetUser(c *gin.Context) {
 	user, err := u.userRepo.GetUser()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (u *userController) GetUserDosen(c *gin.Context) {
+	user, err := u.userRepo.GetUserDosen()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -245,7 +255,7 @@ func (u *userController) Login(c *gin.Context) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24, "", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login success"})
+	c.JSON(http.StatusOK, gin.H{"role": recordUser.Role, "email": recordUser.Email, "token": tokenString})
 }
 
 func (u *userController) Logout(c *gin.Context) {
