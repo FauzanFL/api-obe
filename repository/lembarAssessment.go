@@ -9,7 +9,7 @@ import (
 type LembarAssessmentRepository interface {
 	GetLembarAssessment() ([]model.LembarAssessment, error)
 	GetLembarAssessmentById(id int) (model.LembarAssessment, error)
-	GetLembarAssessmentByCloId(cLoId int) ([]model.LembarAssessment, error)
+	GetLembarAssessmentByCloId(cLoId int) ([]model.LembarAssessmentWithJenis, error)
 	CreateLembarAssessment(lembarAssessment model.LembarAssessment) error
 	UpdateLembarAssessment(lembarAssessment model.LembarAssessment) error
 	DeleteLembarAssessment(id int) error
@@ -41,11 +41,11 @@ func (l *lembarAssessmentRepository) GetLembarAssessmentById(id int) (model.Lemb
 	return lembarAssessment, nil
 }
 
-func (l *lembarAssessmentRepository) GetLembarAssessmentByCloId(cloId int) ([]model.LembarAssessment, error) {
-	var lembarAssessment []model.LembarAssessment
-	err := l.dbKurikulum.Where("clo_id = ?", cloId).First(&lembarAssessment).Error
+func (l *lembarAssessmentRepository) GetLembarAssessmentByCloId(cloId int) ([]model.LembarAssessmentWithJenis, error) {
+	var lembarAssessment []model.LembarAssessmentWithJenis
+	err := l.dbKurikulum.Model(&model.LembarAssessment{}).Select("lembar_assessment.id, lembar_assessment.nama, lembar_assessment.deskripsi, lembar_assessment.bobot,  lembar_assessment.clo_id, jenis_assessment.nama as jenis ").Joins("inner join jenis_assessment on jenis_assessment.id = lembar_assessment.jenis_id").Where("clo_id = ?", cloId).Scan(&lembarAssessment).Error
 	if err != nil {
-		return []model.LembarAssessment{}, err
+		return []model.LembarAssessmentWithJenis{}, err
 	}
 	return lembarAssessment, nil
 }

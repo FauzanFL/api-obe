@@ -4,6 +4,7 @@ import (
 	"api-obe/model"
 	repo "api-obe/repository"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -238,6 +239,17 @@ func (m *mataKuliahController) GetRPS(c *gin.Context) {
 		return
 	}
 
+	sort.Slice(dosenMk, func(i, j int) bool {
+		return dosenMk[i].ID < dosenMk[j].ID
+	})
+
+	for i := 0; i < len(dosenMk)-1; i++ {
+		if dosenMk[i] == dosenMk[i+1] {
+			dosenMk = dosenMk[:i+1]
+			break
+		}
+	}
+
 	var rps model.RPS
 	rps.NamaMataKuliah = mk.Nama
 	rps.KodeMataKuliah = mk.KodeMk
@@ -246,6 +258,7 @@ func (m *mataKuliahController) GetRPS(c *gin.Context) {
 	rps.Prasyarat = mk.Prasyarat
 	rps.DeskripsiMataKuliah = mk.Deskripsi
 	rps.DosenPengampu = dosenMk
+	rps.Prodi = "Rekayasa Perangkat Lunak"
 	rps.PLO = plo
 	rps.CLO = clo
 

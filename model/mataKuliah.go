@@ -12,13 +12,13 @@ type MataKuliah struct {
 }
 
 type RPS struct {
-	NamaMataKuliah      string  `json:"nama_mata_kuliah"`
-	KodeMataKuliah      string  `json:"kode_mata_kuliah"`
+	NamaMataKuliah      string  `json:"nama_mk"`
+	KodeMataKuliah      string  `json:"kode_mk"`
 	SKS                 int     `json:"sks"`
 	Semester            int     `json:"semester"`
 	Prodi               string  `json:"prodi"`
 	Prasyarat           string  `json:"prasyarat"`
-	DeskripsiMataKuliah string  `json:"deskripsi_mata_kuliah"`
+	DeskripsiMataKuliah string  `json:"deskripsi_mk"`
 	DosenPengampu       []Dosen `json:"dosen_pengampu"`
 	PLO                 []PLO   `json:"plo"`
 	CLO                 []CLO   `json:"clo"`

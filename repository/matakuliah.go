@@ -55,7 +55,7 @@ func (m *mataKuliahRepository) GetCLOFromMataKuliah(id int) ([]model.CLO, error)
 
 func (m *mataKuliahRepository) GetPLOFromMataKuliah(id int) ([]model.PLO, error) {
 	var plo []model.PLO
-	err := m.dbKurikulum.Model(&model.PLO{}).Where("plo_id IN ?", m.dbKurikulum.Table("plo_clo").Where("clo_id IN ?", m.dbKurikulum.Table("clo").Where("mkd_id = ?", id).Select("id")).Select("plo_id")).Find(&plo).Error
+	err := m.dbKurikulum.Model(&model.PLO{}).Where("id IN (?)", m.dbKurikulum.Table("clo").Where("mk_id = ?", id).Select("plo_id")).Find(&plo).Error
 	if err != nil {
 		return []model.PLO{}, err
 	}

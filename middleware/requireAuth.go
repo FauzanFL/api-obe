@@ -51,8 +51,6 @@ func (am *authMiddleware) RequireAuth(c *gin.Context) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
-		fmt.Println(claims["sub"])
-
 		user, _ := am.userRepo.GetUserById(int(claims["sub"].(float64)))
 		if user.ID == 0 {
 			c.AbortWithStatus(http.StatusUnauthorized)
