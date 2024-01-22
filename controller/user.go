@@ -15,6 +15,7 @@ import (
 
 type UserController interface {
 	GetUser(c *gin.Context)
+	GetUserRole(c *gin.Context)
 	GetUserDosen(c *gin.Context)
 	AddUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
@@ -39,6 +40,18 @@ func (u *userController) GetUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, user)
+}
+
+func (u *userController) GetUserRole(c *gin.Context) {
+	userExist, exist := c.Get("user")
+	if !exist {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user doesn't exist"})
+		return
+	}
+
+	user := userExist.(model.User)
+
+	c.JSON(http.StatusOK, gin.H{"role": user.Role})
 }
 
 func (u *userController) GetUserDosen(c *gin.Context) {
@@ -131,7 +144,7 @@ func (u *userController) UpdateUser(c *gin.Context) {
 
 	var body struct {
 		Email     string `json:"email" binding:"required"`
-		Password  string `json:"password" binding:"required"`
+		Password  string `json:"password"`
 		KodeDosen string `json:"kode_dosen"`
 		Nama      string `json:"nama"`
 	}
@@ -144,20 +157,27 @@ func (u *userController) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email can't be empty"})
 		return
 	}
-	if body.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "password can't be empty"})
-		return
-	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	var pwd string
+	if body.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		pwd = string(hash)
+	} else {
+		user, err := u.userRepo.GetUserById(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		pwd = user.Password
 	}
 
 	var user model.User
 	user.Email = body.Email
-	user.Password = string(hash)
+	user.Password = pwd
 	user.ID = id
 
 	if err := u.userRepo.Update(user); err != nil {

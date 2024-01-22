@@ -11,6 +11,8 @@ type PerancanganObeRepository interface {
 	GetActivePerancanganObe() (model.PerancanganObe, error)
 	GetPerancanganObeById(id int) (model.PerancanganObe, error)
 	CreatePerancanganObe(perancanganObe model.PerancanganObe) error
+	UpdateStatusPerancangan(id int, status string) error
+	DiactivatePerancangan() error
 	UpdatePerancanganObe(perancanganObe model.PerancanganObe) error
 	DeletePerancanganObe(id int) error
 }
@@ -52,6 +54,22 @@ func (p *perancanganObeRepository) GetPerancanganObeById(id int) (model.Perancan
 
 func (p *perancanganObeRepository) CreatePerancanganObe(perancanganObe model.PerancanganObe) error {
 	err := p.dbKurikulum.Create(&perancanganObe).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *perancanganObeRepository) UpdateStatusPerancangan(id int, status string) error {
+	err := p.dbKurikulum.Model(&model.PerancanganObe{}).Where("id = ?", id).Update("status", status).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *perancanganObeRepository) DiactivatePerancangan() error {
+	err := p.dbKurikulum.Model(&model.PerancanganObe{}).Where("status = ?", "active").Update("status", "inactive").Error
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 type PloController interface {
 	GetPlo(c *gin.Context)
 	GetPloById(c *gin.Context)
+	GetPloByObeId(c *gin.Context)
 	CreatePlo(c *gin.Context)
 	UpdatePlo(c *gin.Context)
 	DeletePlo(c *gin.Context)
@@ -44,6 +45,21 @@ func (m *ploController) GetPloById(c *gin.Context) {
 	}
 
 	plo, err := m.ploRepo.GetPloById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, plo)
+}
+
+func (m *ploController) GetPloByObeId(c *gin.Context) {
+	obeId, err := strconv.Atoi(c.Param("obeId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plo, err := m.ploRepo.GetPloByObeId(obeId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -112,10 +128,6 @@ func (m *ploController) UpdatePlo(c *gin.Context) {
 	}
 	if body.OBEId == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "obe_id can't be empty"})
-		return
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

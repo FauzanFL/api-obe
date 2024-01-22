@@ -49,6 +49,7 @@ func (m *plottingDosenMkController) GetPlottingDosenMk(c *gin.Context) {
 	var plotDatas []model.PlotData
 	for _, v := range plottingDosenMk {
 		var plot model.PlotData
+		plot.ID = v.ID
 		dosen, _ := m.dosenRepo.GetDosenById(v.DosenId)
 		kelas, _ := m.kelasRepo.GetKelasById(v.KelasId)
 		mk, _ := m.mataKuliahRepo.GetMataKuliahById(v.MKId)

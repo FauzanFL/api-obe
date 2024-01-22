@@ -67,10 +67,11 @@ func (l *lembarAssessmentController) GetLembarAssessmentByCloId(c *gin.Context) 
 
 func (l *lembarAssessmentController) CreateLembarAssessment(c *gin.Context) {
 	var body struct {
-		Nama    string  `json:"nama" binding:"required"`
-		Bobot   float64 `json:"bobot" binding:"required"`
-		CLOId   int     `json:"clo_id" binding:"required"`
-		JenisId int     `json:"jenis_id" binding:"required"`
+		Nama      string  `json:"nama" binding:"required"`
+		Deskripsi string  `json:"deskripsi" binding:"required"`
+		Bobot     float64 `json:"bobot" binding:"required"`
+		CLOId     int     `json:"clo_id" binding:"required"`
+		JenisId   int     `json:"jenis_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -95,6 +96,7 @@ func (l *lembarAssessmentController) CreateLembarAssessment(c *gin.Context) {
 
 	var lembarAssessment model.LembarAssessment
 	lembarAssessment.Nama = body.Nama
+	lembarAssessment.Deskripsi = body.Deskripsi
 	lembarAssessment.Bobot = body.Bobot
 	lembarAssessment.CLOId = body.CLOId
 	lembarAssessment.JenisId = body.JenisId
@@ -108,10 +110,11 @@ func (l *lembarAssessmentController) CreateLembarAssessment(c *gin.Context) {
 
 func (l *lembarAssessmentController) UpdateLembarAssessment(c *gin.Context) {
 	var body struct {
-		Nama    string  `json:"nama" binding:"required"`
-		Bobot   float64 `json:"bobot" binding:"required"`
-		CLOId   int     `json:"clo_id" binding:"required"`
-		JenisId int     `json:"jenis_id" binding:"required"`
+		Nama      string  `json:"nama" binding:"required"`
+		Deskripsi string  `json:"deskripsi" binding:"required"`
+		Bobot     float64 `json:"bobot" binding:"required"`
+		CLOId     int     `json:"clo_id" binding:"required"`
+		JenisId   int     `json:"jenis_id" binding:"required"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -141,6 +144,7 @@ func (l *lembarAssessmentController) UpdateLembarAssessment(c *gin.Context) {
 
 	var lembarAssessment model.LembarAssessment
 	lembarAssessment.Nama = body.Nama
+	lembarAssessment.Deskripsi = body.Deskripsi
 	lembarAssessment.Bobot = body.Bobot
 	lembarAssessment.CLOId = body.CLOId
 	lembarAssessment.JenisId = body.JenisId

@@ -35,6 +35,11 @@ func (m *mahasiswaController) GetMahasiswa(c *gin.Context) {
 
 func (m *mahasiswaController) GetMahasiswaByMataKuliah(c *gin.Context) {
 	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	mahasiswa, err := m.mahasiswaRepo.GetMahasiswaByMataKuliah(mkId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

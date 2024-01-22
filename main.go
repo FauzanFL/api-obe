@@ -110,6 +110,7 @@ func main() {
 		userRouter := apiRouter.Group("/users")
 		{
 			userRouter.GET("/", authMiddleware.RequireAdminAuth, userController.GetUser)
+			userRouter.GET("/role", authMiddleware.RequireAuth, userController.GetUserRole)
 			userRouter.GET("/dosen", authMiddleware.RequireAdminAuth, userController.GetUserDosen)
 			userRouter.POST("/", authMiddleware.RequireAdminAuth, userController.AddUser)
 			userRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, userController.DeleteUser)
@@ -128,6 +129,7 @@ func main() {
 		{
 			perancanganObeRouter.GET("/", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObe)
 			perancanganObeRouter.GET("/active", authMiddleware.RequireAdminAuth, perancanganObeController.GetActivePerancanganObe)
+			perancanganObeRouter.PUT("/activate/:id", authMiddleware.RequireAdminAuth, perancanganObeController.ActivatePerancangan)
 			perancanganObeRouter.GET("/:id", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObeById)
 			perancanganObeRouter.POST("/", authMiddleware.RequireAdminAuth, perancanganObeController.CreatePerancanganObe)
 			perancanganObeRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, perancanganObeController.DeletePerancanganObe)
@@ -138,6 +140,7 @@ func main() {
 		{
 			ploRouter.GET("/", authMiddleware.RequireAuth, ploController.GetPlo)
 			ploRouter.GET("/:id", authMiddleware.RequireAuth, ploController.GetPloById)
+			ploRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, ploController.GetPloByObeId)
 			ploRouter.POST("/", authMiddleware.RequireAdminAuth, ploController.CreatePlo)
 			ploRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, ploController.DeletePlo)
 			ploRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, ploController.UpdatePlo)

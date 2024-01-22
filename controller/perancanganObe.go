@@ -16,6 +16,7 @@ type PerancanganObeController interface {
 	CreatePerancanganObe(c *gin.Context)
 	UpdatePerancanganObe(c *gin.Context)
 	DeletePerancanganObe(c *gin.Context)
+	ActivatePerancangan(c *gin.Context)
 }
 
 type perancanganObeController struct {
@@ -132,9 +133,51 @@ func (m *perancanganObeController) DeletePerancanganObe(c *gin.Context) {
 		return
 	}
 
+	perancangan, err := m.perancanganObeRepo.GetPerancanganObeById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if perancangan.Status == "active" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Can't delete active perancangan"})
+		return
+	}
+
 	if err := m.perancanganObeRepo.DeletePerancanganObe(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Perancangan OBE deleted successfully"})
+}
+
+func (m *perancanganObeController) ActivatePerancangan(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	perancangan, err := m.perancanganObeRepo.GetPerancanganObeById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if perancangan.Status == "active" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Perancangan already active"})
+		return
+	}
+
+	if err := m.perancanganObeRepo.DiactivatePerancangan(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := m.perancanganObeRepo.UpdateStatusPerancangan(id, "active"); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Perancangan OBE activated successfully"})
 }
