@@ -12,16 +12,17 @@ type MataKuliah struct {
 }
 
 type RPS struct {
-	NamaMataKuliah      string  `json:"nama_mk"`
-	KodeMataKuliah      string  `json:"kode_mk"`
-	SKS                 int     `json:"sks"`
-	Semester            int     `json:"semester"`
-	Prodi               string  `json:"prodi"`
-	Prasyarat           string  `json:"prasyarat"`
-	DeskripsiMataKuliah string  `json:"deskripsi_mk"`
-	DosenPengampu       []Dosen `json:"dosen_pengampu"`
-	PLO                 []PLO   `json:"plo"`
-	CLO                 []CLO   `json:"clo"`
+	NamaMataKuliah      string                      `json:"nama_mk"`
+	KodeMataKuliah      string                      `json:"kode_mk"`
+	SKS                 int                         `json:"sks"`
+	Semester            int                         `json:"semester"`
+	Prodi               string                      `json:"prodi"`
+	Prasyarat           string                      `json:"prasyarat"`
+	DeskripsiMataKuliah string                      `json:"deskripsi_mk"`
+	DosenPengampu       []Dosen                     `json:"dosen_pengampu"`
+	PLO                 []PLO                       `json:"plo"`
+	CLO                 []CLO                       `json:"clo"`
+	LembarAssessment    []LembarAssessmentWithJenis `json:"lembar_assessment"`
 }
 
 func (MataKuliah) TableName() string {

@@ -24,13 +24,15 @@ type mataKuliahController struct {
 	mataKuliahRepo repo.MataKuliahRepository
 	plottingRepo   repo.PlottingDosenMkRepository
 	dosenRepo      repo.DosenRepository
+	assessmentRepo repo.LembarAssessmentRepository
 }
 
-func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository, plottingRepo repo.PlottingDosenMkRepository, dosenRepo repo.DosenRepository) MataKuliahController {
+func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository, plottingRepo repo.PlottingDosenMkRepository, dosenRepo repo.DosenRepository, assessmentRepo repo.LembarAssessmentRepository) MataKuliahController {
 	return &mataKuliahController{
 		mataKuliahRepo,
 		plottingRepo,
 		dosenRepo,
+		assessmentRepo,
 	}
 }
 
@@ -250,6 +252,16 @@ func (m *mataKuliahController) GetRPS(c *gin.Context) {
 		}
 	}
 
+	var assessments []model.LembarAssessmentWithJenis
+	for _, v := range clo {
+		assessment, err := m.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		assessments = append(assessments, assessment...)
+	}
+
 	var rps model.RPS
 	rps.NamaMataKuliah = mk.Nama
 	rps.KodeMataKuliah = mk.KodeMk
@@ -261,6 +273,7 @@ func (m *mataKuliahController) GetRPS(c *gin.Context) {
 	rps.Prodi = "Rekayasa Perangkat Lunak"
 	rps.PLO = plo
 	rps.CLO = clo
+	rps.LembarAssessment = assessments
 
 	c.JSON(http.StatusOK, rps)
 }

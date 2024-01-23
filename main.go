@@ -93,7 +93,7 @@ func main() {
 	ploController := controller.NewPloController(ploRepo)
 	cloController := controller.NewCloController(cloRepo)
 	kurikulumController := controller.NewKurikulumController(kurikulumRepo)
-	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo)
+	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo, lembarAssessmentRepo)
 	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo, perancanganObeRepo, dosenRepo, kelasRepo, mataKuliahRepo)
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)

@@ -15,6 +15,7 @@ type LembarAssessmentWithJenis struct {
 	Deskripsi string  `json:"deskripsi"`
 	Bobot     float64 `json:"bobot"`
 	CLOId     int     `json:"clo_id"`
+	JenisId   int     `json:"jenis_id"`
 	Jenis     string  `json:"jenis"`
 }
 

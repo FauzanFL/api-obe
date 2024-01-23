@@ -43,7 +43,7 @@ func (l *lembarAssessmentRepository) GetLembarAssessmentById(id int) (model.Lemb
 
 func (l *lembarAssessmentRepository) GetLembarAssessmentByCloId(cloId int) ([]model.LembarAssessmentWithJenis, error) {
 	var lembarAssessment []model.LembarAssessmentWithJenis
-	err := l.dbKurikulum.Model(&model.LembarAssessment{}).Select("lembar_assessment.id, lembar_assessment.nama, lembar_assessment.deskripsi, lembar_assessment.bobot,  lembar_assessment.clo_id, jenis_assessment.nama as jenis ").Joins("inner join jenis_assessment on jenis_assessment.id = lembar_assessment.jenis_id").Where("clo_id = ?", cloId).Scan(&lembarAssessment).Error
+	err := l.dbKurikulum.Model(&model.LembarAssessment{}).Select("lembar_assessment.id, lembar_assessment.nama, lembar_assessment.deskripsi, lembar_assessment.bobot, lembar_assessment.jenis_id, lembar_assessment.clo_id, jenis_assessment.nama as jenis ").Joins("inner join jenis_assessment on jenis_assessment.id = lembar_assessment.jenis_id").Where("clo_id = ?", cloId).Scan(&lembarAssessment).Error
 	if err != nil {
 		return []model.LembarAssessmentWithJenis{}, err
 	}
