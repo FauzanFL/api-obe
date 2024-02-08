@@ -13,6 +13,7 @@ type PloController interface {
 	GetPlo(c *gin.Context)
 	GetPloById(c *gin.Context)
 	GetPloByObeId(c *gin.Context)
+	SearchPloByObeId(c *gin.Context)
 	CreatePlo(c *gin.Context)
 	UpdatePlo(c *gin.Context)
 	DeletePlo(c *gin.Context)
@@ -60,6 +61,22 @@ func (m *ploController) GetPloByObeId(c *gin.Context) {
 	}
 
 	plo, err := m.ploRepo.GetPloByObeId(obeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, plo)
+}
+
+func (m *ploController) SearchPloByObeId(c *gin.Context) {
+	keyword := c.Query("keyword")
+	obeId, err := strconv.Atoi(c.Param("obeId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plo, err := m.ploRepo.GetPloByObeIdAndKeyword(obeId, keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

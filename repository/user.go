@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	GetUser() ([]model.User, error)
 	GetUserDosen() ([]model.UserDosen, error)
+	GetUserDosenBykeyword(keyword string) ([]model.UserDosen, error)
 	GetUserById(id int) (model.User, error)
 	GetUserByEmail(email string) (model.User, error)
 	Add(user model.User) error
@@ -36,6 +37,16 @@ func (u *userRepository) GetUser() ([]model.User, error) {
 func (u *userRepository) GetUserDosen() ([]model.UserDosen, error) {
 	var users []model.UserDosen
 	err := u.db.Model(&model.User{}).Select("user.id, user.email, user.password, user.role, dosen.kode_dosen, dosen.nama").Joins("left join dosen ON dosen.user_id = user.id").Scan(&users).Error
+	if err != nil {
+		return []model.UserDosen{}, err
+	}
+	return users, nil
+}
+
+func (u *userRepository) GetUserDosenBykeyword(keyword string) ([]model.UserDosen, error) {
+	key := "%" + keyword + "%"
+	var users []model.UserDosen
+	err := u.db.Model(&model.User{}).Select("user.id, user.email, user.password, user.role, dosen.kode_dosen, dosen.nama").Joins("left join dosen ON dosen.user_id = user.id").Where("user.email like ? OR dosen.nama like ? OR dosen.kode_dosen like ?", key, key, key).Scan(&users).Error
 	if err != nil {
 		return []model.UserDosen{}, err
 	}

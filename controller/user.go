@@ -17,6 +17,7 @@ type UserController interface {
 	GetUser(c *gin.Context)
 	GetUserRole(c *gin.Context)
 	GetUserDosen(c *gin.Context)
+	SearchUserDosen(c *gin.Context)
 	AddUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
@@ -56,6 +57,16 @@ func (u *userController) GetUserRole(c *gin.Context) {
 
 func (u *userController) GetUserDosen(c *gin.Context) {
 	user, err := u.userRepo.GetUserDosen()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (u *userController) SearchUserDosen(c *gin.Context) {
+	keyword := c.Query("keyword")
+	user, err := u.userRepo.GetUserDosenBykeyword(keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

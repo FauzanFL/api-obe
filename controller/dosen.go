@@ -11,6 +11,7 @@ import (
 type DosenController interface {
 	GetDosen(c *gin.Context)
 	GetMataKuliah(c *gin.Context)
+	SearchMataKuliah(c *gin.Context)
 }
 
 type dosenController struct {
@@ -50,6 +51,32 @@ func (d *dosenController) GetMataKuliah(c *gin.Context) {
 	}
 
 	mataKuliah, err := d.mataKuliahRepo.GetMataKuliahByDosenObeId(perancanganObe.ID, dosen.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, mataKuliah)
+}
+
+func (d *dosenController) SearchMataKuliah(c *gin.Context) {
+	keyword := c.Query("keyword")
+	user, _ := c.Get("user")
+
+	userExist := user.(model.User)
+
+	dosen, err := d.dosenRepo.GetDosenByUserId(userExist.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	perancanganObe, err := d.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	mataKuliah, err := d.mataKuliahRepo.GetMataKuliahByDosenObeIdAndKeyword(perancanganObe.ID, dosen.ID, keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

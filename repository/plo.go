@@ -10,6 +10,7 @@ type PloRepository interface {
 	GetPlo() ([]model.PLO, error)
 	GetPloById(id int) (model.PLO, error)
 	GetPloByObeId(obeId int) ([]model.PLO, error)
+	GetPloByObeIdAndKeyword(obeId int, keyword string) ([]model.PLO, error)
 	CreatePlo(plo model.PLO) error
 	UpdatePlo(plo model.PLO) error
 	DeletePlo(id int) error
@@ -44,6 +45,15 @@ func (p *ploRepository) GetPloById(id int) (model.PLO, error) {
 func (p *ploRepository) GetPloByObeId(obeId int) ([]model.PLO, error) {
 	var plo []model.PLO
 	err := p.dbKurikulum.Model(&model.PLO{}).Where("obe_id = ?", obeId).Find(&plo).Error
+	if err != nil {
+		return []model.PLO{}, err
+	}
+	return plo, nil
+}
+func (p *ploRepository) GetPloByObeIdAndKeyword(obeId int, keyword string) ([]model.PLO, error) {
+	key := "%" + keyword + "%"
+	var plo []model.PLO
+	err := p.dbKurikulum.Model(&model.PLO{}).Where("obe_id = ? AND nama like ?", obeId, key).Find(&plo).Error
 	if err != nil {
 		return []model.PLO{}, err
 	}

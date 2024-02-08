@@ -12,7 +12,9 @@ type MataKuliahRepository interface {
 	GetCLOFromMataKuliah(id int) ([]model.CLO, error)
 	GetPLOFromMataKuliah(id int) ([]model.PLO, error)
 	GetMataKuliahByObeId(obeId int) ([]model.MataKuliah, error)
+	GetMataKuliahByObeIdAndKeyword(obeId int, keyword string) ([]model.MataKuliah, error)
 	GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error)
+	GetMataKuliahByDosenObeIdAndKeyword(obeId int, dosenId int, keyword string) ([]model.MataKuliah, error)
 	CreateMataKuliah(mataKuliah model.MataKuliah) error
 	UpdateMataKuliah(mataKuliah model.MataKuliah) error
 	DeleteMataKuliah(id int) error
@@ -71,9 +73,29 @@ func (m *mataKuliahRepository) GetMataKuliahByObeId(obeId int) ([]model.MataKuli
 	return mataKuliah, nil
 }
 
+func (m *mataKuliahRepository) GetMataKuliahByObeIdAndKeyword(obeId int, keyword string) ([]model.MataKuliah, error) {
+	key := "%" + keyword + "%"
+	var mataKuliah []model.MataKuliah
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND kode_mk like ? OR nama like ?", obeId, key, key).Find(&mataKuliah).Error
+	if err != nil {
+		return []model.MataKuliah{}, err
+	}
+	return mataKuliah, nil
+}
+
 func (m *mataKuliahRepository) GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error) {
 	var mataKuliah []model.MataKuliah
 	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN (?)", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id")).Find(&mataKuliah).Error
+	if err != nil {
+		return []model.MataKuliah{}, err
+	}
+	return mataKuliah, nil
+}
+
+func (m *mataKuliahRepository) GetMataKuliahByDosenObeIdAndKeyword(obeId int, dosenId int, keyword string) ([]model.MataKuliah, error) {
+	key := "%" + keyword + "%"
+	var mataKuliah []model.MataKuliah
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN (?) AND (nama like ? OR kode_mk like ?)", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id"), key, key).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}

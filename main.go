@@ -112,6 +112,7 @@ func main() {
 			userRouter.GET("/", authMiddleware.RequireAdminAuth, userController.GetUser)
 			userRouter.GET("/role", authMiddleware.RequireAuth, userController.GetUserRole)
 			userRouter.GET("/dosen", authMiddleware.RequireAdminAuth, userController.GetUserDosen)
+			userRouter.GET("/dosen/search", authMiddleware.RequireAdminAuth, userController.SearchUserDosen)
 			userRouter.POST("/", authMiddleware.RequireAdminAuth, userController.AddUser)
 			userRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, userController.DeleteUser)
 			userRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, userController.UpdateUser)
@@ -123,11 +124,13 @@ func main() {
 		{
 			dosenRouter.GET("/", authMiddleware.RequireAdminAuth, dosenController.GetDosen)
 			dosenRouter.GET("/mata_kuliah", authMiddleware.RequireDosenAuth, dosenController.GetMataKuliah)
+			dosenRouter.GET("/mata_kuliah/search", authMiddleware.RequireDosenAuth, dosenController.SearchMataKuliah)
 		}
 
 		perancanganObeRouter := apiRouter.Group("/perancangan_obe")
 		{
 			perancanganObeRouter.GET("/", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObe)
+			perancanganObeRouter.GET("/search", authMiddleware.RequireAdminAuth, perancanganObeController.SearchPerancanganObe)
 			perancanganObeRouter.GET("/active", authMiddleware.RequireAdminAuth, perancanganObeController.GetActivePerancanganObe)
 			perancanganObeRouter.PUT("/activate/:id", authMiddleware.RequireAdminAuth, perancanganObeController.ActivatePerancangan)
 			perancanganObeRouter.GET("/:id", authMiddleware.RequireAdminAuth, perancanganObeController.GetPerancanganObeById)
@@ -141,6 +144,7 @@ func main() {
 			ploRouter.GET("/", authMiddleware.RequireAuth, ploController.GetPlo)
 			ploRouter.GET("/:id", authMiddleware.RequireAuth, ploController.GetPloById)
 			ploRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, ploController.GetPloByObeId)
+			ploRouter.GET("/obe/:obeId/search", authMiddleware.RequireAuth, ploController.SearchPloByObeId)
 			ploRouter.POST("/", authMiddleware.RequireAdminAuth, ploController.CreatePlo)
 			ploRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, ploController.DeletePlo)
 			ploRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, ploController.UpdatePlo)
@@ -166,6 +170,7 @@ func main() {
 			mataKuliahRouter.GET("/", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliah)
 			mataKuliahRouter.GET("/:id", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahById)
 			mataKuliahRouter.GET("/obe/:obeId", authMiddleware.RequireAuth, mataKuliahController.GetMataKuliahByObeId)
+			mataKuliahRouter.GET("/obe/:obeId/search", authMiddleware.RequireAuth, mataKuliahController.SearchMataKuliahByObeId)
 			mataKuliahRouter.POST("/", authMiddleware.RequireAdminAuth, mataKuliahController.CreateMataKuliah)
 			mataKuliahRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, mataKuliahController.DeleteMataKuliah)
 			mataKuliahRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, mataKuliahController.UpdateMataKuliah)
@@ -175,6 +180,7 @@ func main() {
 		plottingDosenMkRouter := apiRouter.Group("/plotting_dosen_mk")
 		{
 			plottingDosenMkRouter.GET("/", authMiddleware.RequireAdminAuth, plottingDosenController.GetPlottingDosenMk)
+			plottingDosenMkRouter.GET("/search", authMiddleware.RequireAdminAuth, plottingDosenController.SearchPlottingDosenMk)
 			plottingDosenMkRouter.POST("/", authMiddleware.RequireAdminAuth, plottingDosenController.CreatePlottingDosenMk)
 			plottingDosenMkRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, plottingDosenController.DeletePlottingDosenMk)
 		}
@@ -184,6 +190,7 @@ func main() {
 			lembarAssessmentRouter.GET("/", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessment)
 			lembarAssessmentRouter.GET("/:id", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentById)
 			lembarAssessmentRouter.GET("/clo/:cloId", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentByCloId)
+			lembarAssessmentRouter.GET("/clo/:cloId/search", authMiddleware.RequireAuth, lembarAssessmentController.SearchLembarAssessment)
 			lembarAssessmentRouter.POST("/", authMiddleware.RequireAuth, lembarAssessmentController.CreateLembarAssessment)
 			lembarAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, lembarAssessmentController.DeleteLembarAssessment)
 			lembarAssessmentRouter.PUT("/update/:id", authMiddleware.RequireAuth, lembarAssessmentController.UpdateLembarAssessment)

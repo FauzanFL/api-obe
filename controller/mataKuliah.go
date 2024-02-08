@@ -14,6 +14,7 @@ type MataKuliahController interface {
 	GetMataKuliah(c *gin.Context)
 	GetMataKuliahById(c *gin.Context)
 	GetMataKuliahByObeId(c *gin.Context)
+	SearchMataKuliahByObeId(c *gin.Context)
 	CreateMataKuliah(c *gin.Context)
 	UpdateMataKuliah(c *gin.Context)
 	DeleteMataKuliah(c *gin.Context)
@@ -66,6 +67,21 @@ func (m *mataKuliahController) GetMataKuliahByObeId(c *gin.Context) {
 		return
 	}
 	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeId(obeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, mataKuliah)
+}
+
+func (m *mataKuliahController) SearchMataKuliahByObeId(c *gin.Context) {
+	keyword := c.Query("keyword")
+	obeId, err := strconv.Atoi(c.Param("obeId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeIdAndKeyword(obeId, keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

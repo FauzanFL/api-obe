@@ -10,6 +10,7 @@ type PerancanganObeRepository interface {
 	GetPerancanganObe() ([]model.PerancanganObeKurikulum, error)
 	GetActivePerancanganObe() (model.PerancanganObe, error)
 	GetPerancanganObeById(id int) (model.PerancanganObe, error)
+	GetPerancanganObeByKeyword(keyword string) ([]model.PerancanganObeKurikulum, error)
 	CreatePerancanganObe(perancanganObe model.PerancanganObe) error
 	UpdateStatusPerancangan(id int, status string) error
 	DiactivatePerancangan() error
@@ -28,6 +29,16 @@ func NewPerancanganObeRepo(dbKurikulum *gorm.DB) PerancanganObeRepository {
 func (p *perancanganObeRepository) GetPerancanganObe() ([]model.PerancanganObeKurikulum, error) {
 	var perancanganObe []model.PerancanganObeKurikulum
 	err := p.dbKurikulum.Model(&model.PerancanganObe{}).Select("perancangan_obe.id, perancangan_obe.nama, perancangan_obe.status, kurikulum.nama as kurikulum").Joins("inner join kurikulum on kurikulum.id = perancangan_obe.kurikulum_id").Scan(&perancanganObe).Error
+	if err != nil {
+		return []model.PerancanganObeKurikulum{}, err
+	}
+	return perancanganObe, nil
+}
+
+func (p *perancanganObeRepository) GetPerancanganObeByKeyword(keyword string) ([]model.PerancanganObeKurikulum, error) {
+	key := "%" + keyword + "%"
+	var perancanganObe []model.PerancanganObeKurikulum
+	err := p.dbKurikulum.Model(&model.PerancanganObe{}).Select("perancangan_obe.id, perancangan_obe.nama, perancangan_obe.status, kurikulum.nama as kurikulum").Joins("inner join kurikulum on kurikulum.id = perancangan_obe.kurikulum_id").Where("perancangan_obe.nama like ?", key).Scan(&perancanganObe).Error
 	if err != nil {
 		return []model.PerancanganObeKurikulum{}, err
 	}

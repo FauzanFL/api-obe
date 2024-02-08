@@ -5,12 +5,14 @@ import (
 	repo "api-obe/repository"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PlottingDosenMkController interface {
 	GetPlottingDosenMk(c *gin.Context)
+	SearchPlottingDosenMk(c *gin.Context)
 	CreatePlottingDosenMk(c *gin.Context)
 	DeletePlottingDosenMk(c *gin.Context)
 }
@@ -57,6 +59,38 @@ func (m *plottingDosenMkController) GetPlottingDosenMk(c *gin.Context) {
 		plot.Kelas = kelas.KodeKelas
 		plot.MataKuliah = mk.KodeMk
 		plotDatas = append(plotDatas, plot)
+	}
+
+	c.JSON(http.StatusOK, plotDatas)
+}
+
+func (m *plottingDosenMkController) SearchPlottingDosenMk(c *gin.Context) {
+	keyword := strings.ToUpper(c.Query("keyword"))
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeId(obe.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	plotDatas := []model.PlotData{}
+	for _, v := range plottingDosenMk {
+		var plot model.PlotData
+		dosen, _ := m.dosenRepo.GetDosenById(v.DosenId)
+		kelas, _ := m.kelasRepo.GetKelasById(v.KelasId)
+		mk, _ := m.mataKuliahRepo.GetMataKuliahById(v.MKId)
+		if strings.Contains(mk.KodeMk, keyword) || strings.Contains(dosen.KodeDosen, keyword) {
+			plot.ID = v.ID
+			plot.Dosen = dosen.KodeDosen
+			plot.Kelas = kelas.KodeKelas
+			plot.MataKuliah = mk.KodeMk
+			plotDatas = append(plotDatas, plot)
+		}
 	}
 
 	c.JSON(http.StatusOK, plotDatas)
