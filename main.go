@@ -99,7 +99,7 @@ func main() {
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
 	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
-	penilaianController := controller.NewPenilaianController(penilaianRepo)
+	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, mahasiswaRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
 	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo)
 	kelasController := controller.NewKelasController(kelasRepo)
@@ -180,6 +180,8 @@ func main() {
 		plottingDosenMkRouter := apiRouter.Group("/plotting_dosen_mk")
 		{
 			plottingDosenMkRouter.GET("/", authMiddleware.RequireAdminAuth, plottingDosenController.GetPlottingDosenMk)
+			plottingDosenMkRouter.GET("/matakuliah/:mkId/kelas", authMiddleware.RequireAdminAuth, plottingDosenController.GetKelasMkByMk)
+			plottingDosenMkRouter.GET("/matakuliah/:mkId/kelas/dosen", authMiddleware.RequireDosenAuth, plottingDosenController.GetKelasDosenByMk)
 			plottingDosenMkRouter.GET("/search", authMiddleware.RequireAdminAuth, plottingDosenController.SearchPlottingDosenMk)
 			plottingDosenMkRouter.POST("/", authMiddleware.RequireAdminAuth, plottingDosenController.CreatePlottingDosenMk)
 			plottingDosenMkRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, plottingDosenController.DeletePlottingDosenMk)
@@ -212,6 +214,7 @@ func main() {
 		{
 			penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
 			penilaianRouter.GET("/:id", authMiddleware.RequireAuth, penilaianController.GetPenilaianById)
+			penilaianRouter.GET("/data/matakuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, penilaianController.GetDataPenilaian)
 			penilaianRouter.GET("/kelas/:kelasid", authMiddleware.RequireAuth, penilaianController.GetPenilaianByKelas)
 			penilaianRouter.POST("/", authMiddleware.RequireDosenAuth, penilaianController.CreatePenilaian)
 			penilaianRouter.DELETE("/delete/:id", authMiddleware.RequireDosenAuth, penilaianController.DeletePenilaian)
@@ -234,13 +237,14 @@ func main() {
 		kelasRouter := apiRouter.Group("/kelas")
 		{
 			kelasRouter.GET("/", authMiddleware.RequireAuth, kelasController.GetKelas)
+			kelasRouter.GET("/:kelasId", authMiddleware.RequireAuth, kelasController.GetKelasById)
 		}
 
 		mahasiswaRouter := apiRouter.Group("/mahasiswa")
 		{
 			mahasiswaRouter.GET("/", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswa)
 			mahasiswaRouter.GET("/mata_kuliah/:mkId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByMataKuliah)
-			mahasiswaRouter.POST("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
+			mahasiswaRouter.GET("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
 		}
 	}
 

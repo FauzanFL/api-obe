@@ -13,6 +13,8 @@ import (
 type PlottingDosenMkController interface {
 	GetPlottingDosenMk(c *gin.Context)
 	SearchPlottingDosenMk(c *gin.Context)
+	GetKelasDosenByMk(c *gin.Context)
+	GetKelasMkByMk(c *gin.Context)
 	CreatePlottingDosenMk(c *gin.Context)
 	DeletePlottingDosenMk(c *gin.Context)
 }
@@ -94,6 +96,70 @@ func (m *plottingDosenMkController) SearchPlottingDosenMk(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, plotDatas)
+}
+
+func (m *plottingDosenMkController) GetKelasDosenByMk(c *gin.Context) {
+	user, _ := c.Get("user")
+
+	userExist := user.(model.User)
+
+	dosen, err := m.dosenRepo.GetDosenByUserId(userExist.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plotting, err := m.plottingDosenMkRepo.GetPlottingDosenByMkIdAndDosenId(mkId, dosen.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	kelasList := []model.Kelas{}
+	for _, v := range plotting {
+		kelas, err := m.kelasRepo.GetKelasById(v.KelasId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		kelasList = append(kelasList, kelas)
+	}
+
+	c.JSON(http.StatusOK, kelasList)
+}
+
+func (m *plottingDosenMkController) GetKelasMkByMk(c *gin.Context) {
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plotting, err := m.plottingDosenMkRepo.GetPlottingDosenByMkId(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	kelasList := []model.Kelas{}
+	for _, v := range plotting {
+		kelas, err := m.kelasRepo.GetKelasById(v.KelasId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		kelasList = append(kelasList, kelas)
+	}
+
+	c.JSON(http.StatusOK, kelasList)
 }
 
 func (m *plottingDosenMkController) CreatePlottingDosenMk(c *gin.Context) {

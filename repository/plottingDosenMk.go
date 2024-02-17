@@ -10,6 +10,7 @@ type PlottingDosenMkRepository interface {
 	GetPlottingDosenMk() ([]model.PlottingDosenMk, error)
 	GetPlottingDosenMkByObeId(obeId int) ([]model.PlottingDosenMk, error)
 	GetPlottingDosenByMkId(mkId int) ([]model.PlottingDosenMk, error)
+	GetPlottingDosenByMkIdAndDosenId(mkId int, dosenId int) ([]model.PlottingDosenMk, error)
 	CreatePlottingDosenMk(plottingDosenMk model.PlottingDosenMk) error
 	DeletePlottingDosenMk(id int) error
 }
@@ -43,6 +44,15 @@ func (p *plottingDosenMkRepository) GetPlottingDosenMkByObeId(obeId int) ([]mode
 func (p *plottingDosenMkRepository) GetPlottingDosenByMkId(mkId int) ([]model.PlottingDosenMk, error) {
 	var plottingDosenMk []model.PlottingDosenMk
 	err := p.dbKurikulum.Where("mk_id =?", mkId).Find(&plottingDosenMk).Error
+	if err != nil {
+		return []model.PlottingDosenMk{}, err
+	}
+	return plottingDosenMk, nil
+}
+
+func (p *plottingDosenMkRepository) GetPlottingDosenByMkIdAndDosenId(mkId int, dosenId int) ([]model.PlottingDosenMk, error) {
+	var plottingDosenMk []model.PlottingDosenMk
+	err := p.dbKurikulum.Where("mk_id =? AND dosen_id = ?", mkId, dosenId).Find(&plottingDosenMk).Error
 	if err != nil {
 		return []model.PlottingDosenMk{}, err
 	}

@@ -9,6 +9,11 @@ type Penilaian struct {
 	TahunAjaranId int     `json:"tahun_ajaran_id"`
 }
 
+type PenilaianData struct {
+	MahasiswaNilai []MahasiswaWithPenilaian `json:"mahasiswa_nilai"`
+	CLOAsessment   []CLOWithAssessment      `json:"clo_assessment"`
+}
+
 func (Penilaian) TableName() string {
 	return "penilaian"
 }

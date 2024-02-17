@@ -40,7 +40,7 @@ func (m *mahasiswaRepository) GetMahasiswaByMataKuliah(mkId int) ([]model.Mahasi
 
 func (m *mahasiswaRepository) GetMahasiswaByKelasMataKuliah(mkId int, kelasId int) ([]model.Mahasiswa, error) {
 	var mahasiswa []model.Mahasiswa
-	err := m.dbPenilaian.Model(&model.Mahasiswa{}).Where("id IN ?", m.dbPenilaian.Table("mk_mahasiswa").Where("mk_id = ? AND kelas_id = ?", mkId, kelasId).Select("mhs_id"), kelasId).Error
+	err := m.dbPenilaian.Model(&model.Mahasiswa{}).Where("id IN (?)", m.dbPenilaian.Model(&model.MkMahasiswa{}).Select("mhs_id").Where("mk_id = ? AND kelas_id = ?", mkId, kelasId)).Scan(&mahasiswa).Error
 	if err != nil {
 		return []model.Mahasiswa{}, err
 	}
