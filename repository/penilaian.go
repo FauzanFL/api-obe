@@ -9,7 +9,7 @@ import (
 type PenilaianRepository interface {
 	GetPenilaian() ([]model.Penilaian, error)
 	GetPenilaianById(id int) (model.Penilaian, error)
-	GetPenilaianByMhsIdAndAssessmentId(id int, assessmentId int) (model.Penilaian, error)
+	GetPenilaianByMhsIdAndAssessmentId(mhsId int, assessmentId int) (model.Penilaian, error)
 	GetPenilaianByKelas(kelasId int) ([]model.Penilaian, error)
 	CreatePenilaian(penilaian model.Penilaian) error
 	UpdatePenilaian(penilaian model.Penilaian) error
@@ -44,7 +44,7 @@ func (p *penilaianRepository) GetPenilaianById(id int) (model.Penilaian, error) 
 
 func (p *penilaianRepository) GetPenilaianByMhsIdAndAssessmentId(mhsId int, assessmentId int) (model.Penilaian, error) {
 	var penilaian model.Penilaian
-	err := p.dbPenilaian.Where("mhs_id = ? AND assessment_id = ?", mhsId, assessmentId).Find(&model.Penilaian{}).Error
+	err := p.dbPenilaian.Where("mhs_id = ? AND assessment_id = ?", mhsId, assessmentId).First(&penilaian).Error
 	if err != nil {
 		return model.Penilaian{}, err
 	}

@@ -103,7 +103,9 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		nilaiAssessments := []model.Penilaian{}
 		for _, val := range assessmentsMhs {
 			nilai, _ := p.penilaianRepo.GetPenilaianByMhsIdAndAssessmentId(v.ID, val.ID)
-			nilaiAssessments = append(nilaiAssessments, nilai)
+			if nilai.ID != 0 {
+				nilaiAssessments = append(nilaiAssessments, nilai)
+			}
 		}
 		mahasiswaWithNilai = append(mahasiswaWithNilai, model.MahasiswaWithPenilaian{
 			ID:        v.ID,
