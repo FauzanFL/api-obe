@@ -99,7 +99,7 @@ func main() {
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
 	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
-	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, mahasiswaRepo)
+	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, mahasiswaRepo, dosenRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
 	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo)
 	kelasController := controller.NewKelasController(kelasRepo)

@@ -31,14 +31,16 @@ type penilaianController struct {
 	cloRepo        repo.CloRepository
 	assessmentRepo repo.LembarAssessmentRepository
 	mahasiswaRepo  repo.MahasiswaRepository
+	dosenRepo      repo.DosenRepository
 }
 
-func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, mahasiswaRepo repo.MahasiswaRepository) PenilaianController {
+func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, mahasiswaRepo repo.MahasiswaRepository, dosenRepo repo.DosenRepository) PenilaianController {
 	return &penilaianController{
 		penilaianRepo,
 		cloRepo,
 		assessmentRepo,
 		mahasiswaRepo,
+		dosenRepo,
 	}
 }
 
@@ -156,8 +158,11 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 		Nilai         float64 `json:"nilai" binding:"required"`
 		AssessmentId  int     `json:"assessment_id" binding:"required"`
 		MhsId         int     `json:"mhs_id" binding:"required"`
-		DosenId       int     `json:"dosen_id" binding:"required"`
 		TahunAjaranId int     `json:"tahun_ajaran_id" binding:"required"`
+	}
+	if err := c.Bind(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	if body.Nilai == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nilai can't be empty"})
@@ -171,17 +176,22 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "mhs_id can't be empty"})
 		return
 	}
-	if body.DosenId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "dosen_id can't be empty"})
-		return
-	}
 	if body.TahunAjaranId == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "tahun_ajaran_id can't be empty"})
 		return
 	}
 
-	if err := c.Bind(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	userGet, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
+		return
+	}
+
+	user := userGet.(model.User)
+
+	dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -189,7 +199,7 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 	penilaian.Nilai = body.Nilai
 	penilaian.AssessmentId = body.AssessmentId
 	penilaian.MhsId = body.MhsId
-	penilaian.DosenId = body.DosenId
+	penilaian.DosenId = dosen.ID
 	penilaian.TahunAjaranId = body.TahunAjaranId
 
 	if err := p.penilaianRepo.CreatePenilaian(penilaian); err != nil {
@@ -204,7 +214,6 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 		Nilai         float64 `json:"nilai" binding:"required"`
 		AssessmentId  int     `json:"assessment_id" binding:"required"`
 		MhsId         int     `json:"mhs_id" binding:"required"`
-		DosenId       int     `json:"dosen_id" binding:"required"`
 		TahunAjaranId int     `json:"tahun_ajaran_id" binding:"required"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
@@ -228,12 +237,22 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "mhs_id can't be empty"})
 		return
 	}
-	if body.DosenId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "dosen_id can't be empty"})
-		return
-	}
 	if body.TahunAjaranId == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "tahun_ajaran_id can't be empty"})
+		return
+	}
+
+	userGet, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
+		return
+	}
+
+	user := userGet.(model.User)
+
+	dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -241,13 +260,9 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 	penilaian.Nilai = body.Nilai
 	penilaian.AssessmentId = body.AssessmentId
 	penilaian.MhsId = body.MhsId
-	penilaian.DosenId = body.DosenId
+	penilaian.DosenId = dosen.ID
 	penilaian.TahunAjaranId = body.TahunAjaranId
 	penilaian.ID = id
-	if err := c.Bind(&penilaian); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	if err := p.penilaianRepo.UpdatePenilaian(penilaian); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
