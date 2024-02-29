@@ -7,6 +7,12 @@ type PLO struct {
 	OBEId     int    `json:"obe_id"`
 }
 
+type PLOWithNilai struct {
+	ID    int     `json:"id"`
+	Nama  string  `json:"nama"`
+	Nilai float64 `json:"nilai"`
+}
+
 func (PLO) TableName() string {
 	return "plo"
 }

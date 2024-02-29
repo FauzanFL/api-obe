@@ -10,6 +10,8 @@ type PenilaianRepository interface {
 	GetPenilaian() ([]model.Penilaian, error)
 	GetPenilaianById(id int) (model.Penilaian, error)
 	GetPenilaianByMhsIdAndAssessmentId(mhsId int, assessmentId int) (model.Penilaian, error)
+	GetPenilaianByAssessmentId(assessmentId int) ([]model.Penilaian, error)
+	GetPenilaianByAssessmentIds(assessmentIds []int) ([]model.Penilaian, error)
 	GetPenilaianByKelas(kelasId int) ([]model.Penilaian, error)
 	CreatePenilaian(penilaian model.Penilaian) error
 	UpdatePenilaian(penilaian model.Penilaian) error
@@ -38,6 +40,24 @@ func (p *penilaianRepository) GetPenilaianById(id int) (model.Penilaian, error) 
 	err := p.dbPenilaian.First(&penilaian, id).Error
 	if err != nil {
 		return model.Penilaian{}, err
+	}
+	return penilaian, nil
+}
+
+func (p *penilaianRepository) GetPenilaianByAssessmentId(assessmentId int) ([]model.Penilaian, error) {
+	var penilaian []model.Penilaian
+	err := p.dbPenilaian.Where("assessment_id = ?", assessmentId).Find(&penilaian).Error
+	if err != nil {
+		return []model.Penilaian{}, err
+	}
+	return penilaian, nil
+}
+
+func (p *penilaianRepository) GetPenilaianByAssessmentIds(assessmentIds []int) ([]model.Penilaian, error) {
+	var penilaian []model.Penilaian
+	err := p.dbPenilaian.Where("assessment_id IN (?)", assessmentIds).Find(&penilaian).Error
+	if err != nil {
+		return []model.Penilaian{}, err
 	}
 	return penilaian, nil
 }

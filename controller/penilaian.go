@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maxbeatty/golang-book/chapter11/math"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 )
@@ -18,6 +19,8 @@ import (
 type PenilaianController interface {
 	GetPenilaian(c *gin.Context)
 	GetDataPenilaian(c *gin.Context)
+	GetDataPenilaianCLOPLOByMk(c *gin.Context)
+	GetDataPenilaianPLO(c *gin.Context)
 	GetPenilaianById(c *gin.Context)
 	GetPenilaianByKelas(c *gin.Context)
 	CreatePenilaian(c *gin.Context)
@@ -27,20 +30,24 @@ type PenilaianController interface {
 }
 
 type penilaianController struct {
-	penilaianRepo  repo.PenilaianRepository
-	cloRepo        repo.CloRepository
-	assessmentRepo repo.LembarAssessmentRepository
-	mahasiswaRepo  repo.MahasiswaRepository
-	dosenRepo      repo.DosenRepository
+	penilaianRepo   repo.PenilaianRepository
+	cloRepo         repo.CloRepository
+	assessmentRepo  repo.LembarAssessmentRepository
+	mahasiswaRepo   repo.MahasiswaRepository
+	dosenRepo       repo.DosenRepository
+	ploRepo         repo.PloRepository
+	perancanganRepo repo.PerancanganObeRepository
 }
 
-func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, mahasiswaRepo repo.MahasiswaRepository, dosenRepo repo.DosenRepository) PenilaianController {
+func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, mahasiswaRepo repo.MahasiswaRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository) PenilaianController {
 	return &penilaianController{
 		penilaianRepo,
 		cloRepo,
 		assessmentRepo,
 		mahasiswaRepo,
 		dosenRepo,
+		ploRepo,
+		perancanganRepo,
 	}
 }
 
@@ -123,6 +130,151 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		MahasiswaNilai: mahasiswaWithNilai,
 	}
 	c.JSON(http.StatusOK, dataPenilaian)
+}
+
+func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	clo, err := p.cloRepo.GetCLOByMkId(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	listCloWithNilai := make([]model.CLOWithNilai, len(clo))
+	listPloWithNilai := []model.PLOWithNilai{}
+	listPlo := map[int]model.PLO{}
+
+	for i, v := range clo {
+		assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
+		var nilaiFinal = map[int][]float64{}
+		if len(assessments) > 0 {
+			for _, val := range assessments {
+				penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID)
+				if len(penilaian) > 0 {
+					for _, value := range penilaian {
+						nilaiFinal[value.MhsId] = append(nilaiFinal[value.MhsId], value.Nilai)
+					}
+				} else {
+					nilaiFinal[0] = []float64{0}
+				}
+			}
+		} else {
+			nilaiFinal = map[int][]float64{
+				0: {0},
+			}
+		}
+
+		plo, _ := p.ploRepo.GetPloById(v.PLOId)
+
+		var total float64 = 0.0
+		for _, numbers := range nilaiFinal {
+			total += math.Average(numbers)
+		}
+
+		avg := total / float64(len(nilaiFinal))
+		var formattedAvg = formatAvg(avg)
+		cloWithNilai := model.CLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			PLOId: v.PLOId,
+			Nilai: formattedAvg,
+		}
+		listCloWithNilai[i] = cloWithNilai
+
+		listPlo[plo.ID] = plo
+	}
+
+	for _, v := range listPlo {
+		var nilaiFinal = []float64{}
+		for _, val := range listCloWithNilai {
+			if v.ID == val.PLOId {
+				nilaiFinal = append(nilaiFinal, val.Nilai)
+			}
+		}
+		avg := math.Average(nilaiFinal)
+		var formattedAvg = formatAvg(avg)
+		ploWithNilai := model.PLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			Nilai: formattedAvg,
+		}
+		listPloWithNilai = append(listPloWithNilai, ploWithNilai)
+	}
+
+	var response struct {
+		Clo []model.CLOWithNilai `json:"clo"`
+		Plo []model.PLOWithNilai `json:"plo"`
+	}
+
+	response.Clo = listCloWithNilai
+	response.Plo = listPloWithNilai
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
+	obe, err := p.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plo, err := p.ploRepo.GetPloByObeId(obe.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	listPloWithNilai := []model.PLOWithNilai{}
+	for _, v := range plo {
+		clo, _ := p.cloRepo.GetCLOByPLOId(v.ID)
+		var nilaiFinal []float64
+		if len(clo) > 0 {
+			var assessmentIds []int
+			for _, c := range clo {
+				assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
+				for _, val := range assessments {
+					assessmentIds = append(assessmentIds, val.ID)
+				}
+			}
+
+			penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentIds(assessmentIds)
+			nilai := make(map[int][]float64)
+			if len(penilaian) > 0 {
+				for _, value := range penilaian {
+					nilai[value.MhsId] = append(nilai[value.MhsId], value.Nilai)
+				}
+			} else {
+				nilai[0] = []float64{0}
+			}
+
+			var total float64 = 0.0
+			for _, numbers := range nilai {
+				total += math.Average(numbers)
+			}
+
+			avg := total / float64(len(nilai))
+			nilaiFinal = append(nilaiFinal, avg)
+		} else {
+			nilaiFinal = append(nilaiFinal, 0)
+		}
+
+		var formattedAvg = formatAvg(math.Average(nilaiFinal))
+
+		ploWithNilai := model.PLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			Nilai: formattedAvg,
+		}
+		listPloWithNilai = append(listPloWithNilai, ploWithNilai)
+	}
+
+	c.JSON(http.StatusOK, listPloWithNilai)
 }
 
 func (p *penilaianController) GetPenilaianById(c *gin.Context) {
@@ -323,4 +475,16 @@ func (p *penilaianController) UploadEvidence(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
+}
+
+func formatAvg(avg float64) float64 {
+	if avg == float64(int64(avg)) {
+		return avg
+	} else {
+		parsedNumber, err := strconv.ParseFloat(fmt.Sprintf("%.2f", avg), 64)
+		if err != nil {
+			return avg
+		}
+		return parsedNumber
+	}
 }

@@ -19,6 +19,13 @@ type CLOWithAssessment struct {
 	Assessments []LembarAssessmentWithJenis `json:"assessment"`
 }
 
+type CLOWithNilai struct {
+	ID    int     `json:"id"`
+	PLOId int     `json:"plo_id"`
+	Nama  string  `json:"nama"`
+	Nilai float64 `json:"nilai"`
+}
+
 func (CLO) TableName() string {
 	return "clo"
 }

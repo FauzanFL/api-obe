@@ -75,7 +75,7 @@ func (am *authMiddleware) RequireAdminAuth(c *gin.Context) {
 
 	userExist := user.(model.User)
 
-	if userExist.Role != "admin" {
+	if userExist.Role != "prodi" {
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}

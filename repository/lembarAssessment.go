@@ -10,6 +10,7 @@ type LembarAssessmentRepository interface {
 	GetLembarAssessment() ([]model.LembarAssessment, error)
 	GetLembarAssessmentById(id int) (model.LembarAssessment, error)
 	GetLembarAssessmentByCloId(cLoId int) ([]model.LembarAssessmentWithJenis, error)
+	GetLembarAssessmentByPloId(pLoId int) ([]model.LembarAssessment, error)
 	GetLembarAssessmentByCloIdAndKeyword(cLoId int, keyword string) ([]model.LembarAssessmentWithJenis, error)
 	CreateLembarAssessment(lembarAssessment model.LembarAssessment) error
 	UpdateLembarAssessment(lembarAssessment model.LembarAssessment) error
@@ -38,6 +39,15 @@ func (l *lembarAssessmentRepository) GetLembarAssessmentById(id int) (model.Lemb
 	err := l.dbKurikulum.First(&lembarAssessment, id).Error
 	if err != nil {
 		return model.LembarAssessment{}, err
+	}
+	return lembarAssessment, nil
+}
+
+func (l *lembarAssessmentRepository) GetLembarAssessmentByPloId(ploId int) ([]model.LembarAssessment, error) {
+	var lembarAssessment []model.LembarAssessment
+	err := l.dbKurikulum.Model(&model.LembarAssessment{}).Where("clo_id IN (?)", l.dbKurikulum.Model(&model.CLO{}).Select("id").Where("plo_id = ?", ploId)).Scan(&lembarAssessment).Error
+	if err != nil {
+		return []model.LembarAssessment{}, err
 	}
 	return lembarAssessment, nil
 }
