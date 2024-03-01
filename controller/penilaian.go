@@ -264,7 +264,14 @@ func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
 			nilaiFinal = append(nilaiFinal, 0)
 		}
 
-		var formattedAvg = formatAvg(math.Average(nilaiFinal))
+		var cloLen float64
+		if len(clo) > 0 {
+			cloLen = float64(len(clo))
+		} else {
+			cloLen = 1
+		}
+
+		var formattedAvg = formatAvg(math.Average(nilaiFinal) / cloLen)
 
 		ploWithNilai := model.PLOWithNilai{
 			ID:    v.ID,
