@@ -67,6 +67,12 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		return
 	}
 
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	mkId, err := strconv.Atoi(c.Param("mkId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -111,7 +117,7 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 	for _, v := range mahasiswa {
 		nilaiAssessments := []model.Penilaian{}
 		for _, val := range assessmentsMhs {
-			nilai, _ := p.penilaianRepo.GetPenilaianByMhsIdAndAssessmentId(v.ID, val.ID)
+			nilai, _ := p.penilaianRepo.GetPenilaianByMhsIdAndAssessmentId(v.ID, val.ID, tahunId)
 			if nilai.ID != 0 {
 				nilaiAssessments = append(nilaiAssessments, nilai)
 			}
@@ -139,6 +145,12 @@ func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
 		return
 	}
 
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	clo, err := p.cloRepo.GetCLOByMkId(mkId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -154,7 +166,7 @@ func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
 		var nilaiFinal = map[int][]float64{}
 		if len(assessments) > 0 {
 			for _, val := range assessments {
-				penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID)
+				penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID, tahunId)
 				if len(penilaian) > 0 {
 					for _, value := range penilaian {
 						nilaiFinal[value.MhsId] = append(nilaiFinal[value.MhsId], value.Nilai)
@@ -218,6 +230,12 @@ func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
 }
 
 func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	obe, err := p.perancanganRepo.GetActivePerancanganObe()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -243,7 +261,7 @@ func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
 				}
 			}
 
-			penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentIds(assessmentIds)
+			penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentIds(assessmentIds, tahunId)
 			nilai := make(map[int][]float64)
 			if len(penilaian) > 0 {
 				for _, value := range penilaian {
@@ -304,7 +322,14 @@ func (p *penilaianController) GetPenilaianByKelas(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	penilaian, err := p.penilaianRepo.GetPenilaianByKelas(kelasId)
+
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	penilaian, err := p.penilaianRepo.GetPenilaianByKelas(kelasId, tahunId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
