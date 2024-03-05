@@ -251,48 +251,39 @@ func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
 	listPloWithNilai := []model.PLOWithNilai{}
 	for _, v := range plo {
 		clo, _ := p.cloRepo.GetCLOByPLOId(v.ID)
-		var nilaiFinal []float64
+		var nilaiFinal float64
 		if len(clo) > 0 {
-			var assessmentIds []int
+			var nilaiClo []float64
 			for _, c := range clo {
 				assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
 				for _, val := range assessments {
-					assessmentIds = append(assessmentIds, val.ID)
+					penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID, tahunId)
+					nilai := make(map[int][]float64)
+					if len(penilaian) > 0 {
+						for _, value := range penilaian {
+							nilai[value.MhsId] = append(nilai[value.MhsId], value.Nilai)
+						}
+					} else {
+						nilai[0] = []float64{0}
+					}
+					var total float64 = 0.0
+					for _, numbers := range nilai {
+						total += math.Average(numbers)
+					}
+					avg := total / float64(len(nilai))
+					nilaiClo = append(nilaiClo, avg)
 				}
+
 			}
 
-			penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentIds(assessmentIds, tahunId)
-			nilai := make(map[int][]float64)
-			if len(penilaian) > 0 {
-				for _, value := range penilaian {
-					nilai[value.MhsId] = append(nilai[value.MhsId], value.Nilai)
-				}
-			} else {
-				nilai[0] = []float64{0}
-			}
+			fmt.Println(nilaiClo)
 
-			var total float64 = 0.0
-			for _, numbers := range nilai {
-				total += math.Average(numbers)
-			}
-
-			avg := total / float64(len(nilai))
-			nilaiFinal = append(nilaiFinal, avg)
+			nilaiFinal = math.Average(nilaiClo)
 		} else {
-			nilaiFinal = append(nilaiFinal, 0)
+			nilaiFinal = 0
 		}
 
-		var cloLen float64
-		fmt.Println(nilaiFinal)
-		fmt.Println(math.Average(nilaiFinal))
-		fmt.Println(clo)
-		if len(clo) > 0 {
-			cloLen = float64(len(clo))
-		} else {
-			cloLen = 1
-		}
-
-		var formattedAvg = formatAvg(math.Average(nilaiFinal) / cloLen)
+		var formattedAvg = formatAvg(nilaiFinal)
 
 		ploWithNilai := model.PLOWithNilai{
 			ID:    v.ID,
