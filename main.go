@@ -101,7 +101,7 @@ func main() {
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
 	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, mahasiswaRepo, dosenRepo, ploRepo, perancanganObeRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
-	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo)
+	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo, dosenRepo, tahunAjaranRepo, lembarAssessmentRepo, mahasiswaRepo, penilaianRepo)
 	kelasController := controller.NewKelasController(kelasRepo)
 	mahasiswaController := controller.NewMahasiswaController(mahasiswaRepo)
 
@@ -233,7 +233,8 @@ func main() {
 		beritaAcaraRouter := apiRouter.Group("/berita_acara")
 		{
 			beritaAcaraRouter.GET("/", authMiddleware.RequireAuth, beritaAcaraController.GetBeritaAcara)
-			beritaAcaraRouter.POST("/", authMiddleware.RequireAuth, beritaAcaraController.CreateBeritaAcara)
+			beritaAcaraRouter.POST("/", authMiddleware.RequireDosenAuth, beritaAcaraController.CreateBeritaAcara)
+			beritaAcaraRouter.POST("/batch", authMiddleware.RequireDosenAuth, beritaAcaraController.CreateManyBeritaAcara)
 			beritaAcaraRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, beritaAcaraController.DeleteBeritaAcara)
 		}
 

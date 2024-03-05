@@ -8,6 +8,7 @@ import (
 
 type TahunAjaranRepository interface {
 	GetTahunAjaran() ([]model.TahunAjaran, error)
+	GetTahunAjaranById(id int) (model.TahunAjaran, error)
 	GetTahunAjaranByMonth(currentMonth int) ([]model.TahunAjaran, error)
 }
 
@@ -24,6 +25,15 @@ func (p *tahunAjaranRepository) GetTahunAjaran() ([]model.TahunAjaran, error) {
 	err := p.dbPenilaian.Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
+	}
+	return tahunAjaran, nil
+}
+
+func (p *tahunAjaranRepository) GetTahunAjaranById(id int) (model.TahunAjaran, error) {
+	var tahunAjaran model.TahunAjaran
+	err := p.dbPenilaian.First(&tahunAjaran, id).Error
+	if err != nil {
+		return model.TahunAjaran{}, err
 	}
 	return tahunAjaran, nil
 }

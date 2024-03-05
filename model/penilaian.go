@@ -7,6 +7,7 @@ type Penilaian struct {
 	MhsId         int     `json:"mhs_id"`
 	DosenId       int     `json:"dosen_id"`
 	TahunAjaranId int     `json:"tahun_ajaran_id"`
+	Status        string  `json:"status"`
 }
 
 type PenilaianData struct {

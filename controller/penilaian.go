@@ -283,6 +283,9 @@ func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
 		}
 
 		var cloLen float64
+		fmt.Println(nilaiFinal)
+		fmt.Println(math.Average(nilaiFinal))
+		fmt.Println(clo)
 		if len(clo) > 0 {
 			cloLen = float64(len(clo))
 		} else {

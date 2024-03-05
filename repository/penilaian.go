@@ -15,6 +15,7 @@ type PenilaianRepository interface {
 	GetPenilaianByKelas(kelasId int, tahunId int) ([]model.Penilaian, error)
 	CreatePenilaian(penilaian model.Penilaian) error
 	UpdatePenilaian(penilaian model.Penilaian) error
+	UpdateStatusToFinal(id int) error
 	DeletePenilaian(id int) error
 }
 
@@ -78,6 +79,14 @@ func (p *penilaianRepository) GetPenilaianByKelas(kelasId int, tahunId int) ([]m
 		return []model.Penilaian{}, err
 	}
 	return penilaian, nil
+}
+
+func (p *penilaianRepository) UpdateStatusToFinal(id int) error {
+	err := p.dbPenilaian.Model(&model.Penilaian{}).Where("id = ?", id).Update("status", "final").Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *penilaianRepository) CreatePenilaian(penilaian model.Penilaian) error {
