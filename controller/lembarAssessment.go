@@ -12,6 +12,7 @@ import (
 type LembarAssessmentController interface {
 	GetLembarAssessment(c *gin.Context)
 	GetLembarAssessmentById(c *gin.Context)
+	GetLembarAssessmentByMkId(c *gin.Context)
 	GetLembarAssessmentByCloId(c *gin.Context)
 	SearchLembarAssessment(c *gin.Context)
 	CreateLembarAssessment(c *gin.Context)
@@ -21,11 +22,13 @@ type LembarAssessmentController interface {
 
 type lembarAssessmentController struct {
 	lembarAssessmentRepo repo.LembarAssessmentRepository
+	cloRepo              repo.CloRepository
 }
 
-func NewLembarAssessmentController(lembarAssessmentRepo repo.LembarAssessmentRepository) LembarAssessmentController {
+func NewLembarAssessmentController(lembarAssessmentRepo repo.LembarAssessmentRepository, cloRepo repo.CloRepository) LembarAssessmentController {
 	return &lembarAssessmentController{
 		lembarAssessmentRepo,
+		cloRepo,
 	}
 }
 
@@ -64,6 +67,33 @@ func (l *lembarAssessmentController) GetLembarAssessmentByCloId(c *gin.Context) 
 		return
 	}
 	c.JSON(http.StatusOK, lembarAssessment)
+}
+
+func (l *lembarAssessmentController) GetLembarAssessmentByMkId(c *gin.Context) {
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	clo, err := l.cloRepo.GetCLOByMkId(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	assessments := []model.LembarAssessmentWithJenis{}
+
+	for _, v := range clo {
+		lembarAssessment, err := l.lembarAssessmentRepo.GetLembarAssessmentByCloId(v.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		assessments = append(assessments, lembarAssessment...)
+	}
+
+	c.JSON(http.StatusOK, assessments)
 }
 
 func (l *lembarAssessmentController) SearchLembarAssessment(c *gin.Context) {

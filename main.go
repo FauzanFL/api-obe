@@ -95,7 +95,7 @@ func main() {
 	kurikulumController := controller.NewKurikulumController(kurikulumRepo)
 	mataKuliahController := controller.NewMataKuliahController(mataKuliahRepo, plottingDosenRepo, dosenRepo, lembarAssessmentRepo)
 	plottingDosenController := controller.NewPlottingDosenMkController(plottingDosenRepo, perancanganObeRepo, dosenRepo, kelasRepo, mataKuliahRepo)
-	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo)
+	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo, cloRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
 	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
 	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
@@ -191,6 +191,7 @@ func main() {
 		{
 			lembarAssessmentRouter.GET("/", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessment)
 			lembarAssessmentRouter.GET("/:id", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentById)
+			lembarAssessmentRouter.GET("/matakuliah/:mkId", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentByMkId)
 			lembarAssessmentRouter.GET("/clo/:cloId", authMiddleware.RequireAuth, lembarAssessmentController.GetLembarAssessmentByCloId)
 			lembarAssessmentRouter.GET("/clo/:cloId/search", authMiddleware.RequireAuth, lembarAssessmentController.SearchLembarAssessment)
 			lembarAssessmentRouter.POST("/", authMiddleware.RequireAuth, lembarAssessmentController.CreateLembarAssessment)
