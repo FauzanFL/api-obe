@@ -69,6 +69,7 @@ func main() {
 	dbUser := db.GetDBConnection(os.Getenv("DB_USER_IDENTIFICATION_NAME"))
 	dbKurikulum := db.GetDBConnection(os.Getenv("DB_KURIKULUM_IDENTIFICATION_NAME"))
 	dbPenilaian := db.GetDBConnection(os.Getenv("DB_PENILAIAN_IDENTIFICATION_NAME"))
+
 	perancanganObeRepo := repo.NewPerancanganObeRepo(dbKurikulum)
 	ploRepo := repo.NewPloRepo(dbKurikulum)
 	cloRepo := repo.NewCloRepo(dbKurikulum)
@@ -85,6 +86,7 @@ func main() {
 	beritaAcaraRepo := repo.NewBeritaAcaraRepo(dbPenilaian)
 	kelasRepo := repo.NewKelasRepo(dbPenilaian)
 	mahasiswaRepo := repo.NewMahasiswaRepo(dbPenilaian)
+	indexPenilaianRepo := repo.NewIndexPenilaianRepo(dbPenilaian)
 
 	authMiddleware := middleware.NewAuthMiddleware(userRepo)
 
@@ -104,6 +106,7 @@ func main() {
 	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo, dosenRepo, tahunAjaranRepo, lembarAssessmentRepo, mahasiswaRepo, penilaianRepo)
 	kelasController := controller.NewKelasController(kelasRepo)
 	mahasiswaController := controller.NewMahasiswaController(mahasiswaRepo)
+	indexPenilaianController := controller.NewIndexPenilaianController(indexPenilaianRepo)
 
 	apiRouter := r.Group("/api")
 	{
@@ -250,7 +253,17 @@ func main() {
 			kelasRouter.GET("/search", authMiddleware.RequireAuth, kelasController.SearchKelas)
 			kelasRouter.POST("/", authMiddleware.RequireAdminAuth, kelasController.CreateKelas)
 			kelasRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, kelasController.UpdateKelas)
-			kelasRouter.GET("/delete/:id", authMiddleware.RequireAdminAuth, kelasController.DeleteKelas)
+			kelasRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, kelasController.DeleteKelas)
+		}
+
+		indexPenilaianRouter := apiRouter.Group("/index_penilaian")
+		{
+			indexPenilaianRouter.GET("/", authMiddleware.RequireAuth, indexPenilaianController.GetIndexPenilaian)
+			indexPenilaianRouter.GET("/:id", authMiddleware.RequireAuth, indexPenilaianController.GetIndexPenilaianById)
+			indexPenilaianRouter.GET("/grade", authMiddleware.RequireAuth, indexPenilaianController.GetIndexPenilaianByNilai)
+			indexPenilaianRouter.POST("/", authMiddleware.RequireAdminAuth, indexPenilaianController.CreateIndexPenilaian)
+			indexPenilaianRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, indexPenilaianController.UpdateIndexPenilaian)
+			indexPenilaianRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, indexPenilaianController.DeleteIndexPenilaian)
 		}
 
 		mahasiswaRouter := apiRouter.Group("/mahasiswa")
