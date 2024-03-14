@@ -229,6 +229,10 @@ func main() {
 		{
 			tahunAjaranRouter.GET("/", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaran)
 			tahunAjaranRouter.GET("/now", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaranNow)
+			tahunAjaranRouter.GET("/search", authMiddleware.RequireAuth, tahunAjaranController.SearchTahunAjaran)
+			tahunAjaranRouter.POST("/", authMiddleware.RequireAdminAuth, tahunAjaranController.CreateTahunAjaran)
+			tahunAjaranRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, tahunAjaranController.UpdateTahunAjaran)
+			tahunAjaranRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, tahunAjaranController.DeleteTahunAjaran)
 		}
 
 		beritaAcaraRouter := apiRouter.Group("/berita_acara")
@@ -243,6 +247,10 @@ func main() {
 		{
 			kelasRouter.GET("/", authMiddleware.RequireAuth, kelasController.GetKelas)
 			kelasRouter.GET("/:kelasId", authMiddleware.RequireAuth, kelasController.GetKelasById)
+			kelasRouter.GET("/search", authMiddleware.RequireAuth, kelasController.SearchKelas)
+			kelasRouter.POST("/", authMiddleware.RequireAdminAuth, kelasController.CreateKelas)
+			kelasRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, kelasController.UpdateKelas)
+			kelasRouter.GET("/delete/:id", authMiddleware.RequireAdminAuth, kelasController.DeleteKelas)
 		}
 
 		mahasiswaRouter := apiRouter.Group("/mahasiswa")
