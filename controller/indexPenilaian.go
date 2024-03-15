@@ -5,6 +5,7 @@ import (
 	repo "api-obe/repository"
 	"net/http"
 	"strconv"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,7 +69,7 @@ func (i *indexPenilaianController) GetIndexPenilaianByNilai(c *gin.Context) {
 func (i *indexPenilaianController) CreateIndexPenilaian(c *gin.Context) {
 	var body struct {
 		Grade      string  `json:"grade" binding:"required"`
-		BatasAwal  float64 `json:"batas_awal" binding:"required"`
+		BatasAwal  float64 `json:"batas_awal"`
 		BatasAkhir float64 `json:"batas_akhir" binding:"required"`
 	}
 
@@ -80,12 +81,8 @@ func (i *indexPenilaianController) CreateIndexPenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "grade can't be empty"})
 		return
 	}
-	if body.BatasAwal == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "batas awal can't be empty"})
-		return
-	}
 	if body.BatasAkhir == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "batas akhir can't be empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "batas akhir can't be empty or 0"})
 		return
 	}
 
@@ -106,7 +103,7 @@ func (i *indexPenilaianController) CreateIndexPenilaian(c *gin.Context) {
 func (i *indexPenilaianController) UpdateIndexPenilaian(c *gin.Context) {
 	var body struct {
 		Grade      string  `json:"grade" binding:"required"`
-		BatasAwal  float64 `json:"batas_awal" binding:"required"`
+		BatasAwal  float64 `json:"batas_awal"`
 		BatasAkhir float64 `json:"batas_akhir" binding:"required"`
 	}
 
@@ -123,12 +120,8 @@ func (i *indexPenilaianController) UpdateIndexPenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "grade can't be empty"})
 		return
 	}
-	if body.BatasAwal == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "batas awal can't be empty"})
-		return
-	}
 	if body.BatasAkhir == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "batas akhir can't be empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "batas akhir can't be empty or 0"})
 		return
 	}
 

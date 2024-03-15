@@ -26,7 +26,7 @@ func NewTahunAjaranRepo(dbPenilaian *gorm.DB) TahunAjaranRepository {
 
 func (p *tahunAjaranRepository) GetTahunAjaran() ([]model.TahunAjaran, error) {
 	var tahunAjaran []model.TahunAjaran
-	err := p.dbPenilaian.Find(&tahunAjaran).Error
+	err := p.dbPenilaian.Order("tahun desc").Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
 	}
