@@ -13,8 +13,8 @@ import (
 type MataKuliahController interface {
 	GetMataKuliah(c *gin.Context)
 	GetMataKuliahById(c *gin.Context)
-	GetMataKuliahByObeId(c *gin.Context)
-	SearchMataKuliahByObeId(c *gin.Context)
+	GetMataKuliahActiveByTahunId(c *gin.Context)
+	SearchMataKuliahActiveByTahunId(c *gin.Context)
 	CreateMataKuliah(c *gin.Context)
 	UpdateMataKuliah(c *gin.Context)
 	DeleteMataKuliah(c *gin.Context)
@@ -22,18 +22,20 @@ type MataKuliahController interface {
 }
 
 type mataKuliahController struct {
-	mataKuliahRepo repo.MataKuliahRepository
-	plottingRepo   repo.PlottingDosenMkRepository
-	dosenRepo      repo.DosenRepository
-	assessmentRepo repo.LembarAssessmentRepository
+	mataKuliahRepo  repo.MataKuliahRepository
+	plottingRepo    repo.PlottingDosenMkRepository
+	dosenRepo       repo.DosenRepository
+	assessmentRepo  repo.LembarAssessmentRepository
+	perancanganRepo repo.PerancanganObeRepository
 }
 
-func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository, plottingRepo repo.PlottingDosenMkRepository, dosenRepo repo.DosenRepository, assessmentRepo repo.LembarAssessmentRepository) MataKuliahController {
+func NewMataKuliahController(mataKuliahRepo repo.MataKuliahRepository, plottingRepo repo.PlottingDosenMkRepository, dosenRepo repo.DosenRepository, assessmentRepo repo.LembarAssessmentRepository, perancanganRepo repo.PerancanganObeRepository) MataKuliahController {
 	return &mataKuliahController{
 		mataKuliahRepo,
 		plottingRepo,
 		dosenRepo,
 		assessmentRepo,
+		perancanganRepo,
 	}
 }
 
@@ -60,13 +62,18 @@ func (m *mataKuliahController) GetMataKuliahById(c *gin.Context) {
 	c.JSON(http.StatusOK, mataKuliah)
 }
 
-func (m *mataKuliahController) GetMataKuliahByObeId(c *gin.Context) {
-	obeId, err := strconv.Atoi(c.Param("obeId"))
+func (m *mataKuliahController) GetMataKuliahActiveByTahunId(c *gin.Context) {
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeId(obeId)
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeIdAndTahunId(obe.ID, tahunId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -74,14 +81,19 @@ func (m *mataKuliahController) GetMataKuliahByObeId(c *gin.Context) {
 	c.JSON(http.StatusOK, mataKuliah)
 }
 
-func (m *mataKuliahController) SearchMataKuliahByObeId(c *gin.Context) {
+func (m *mataKuliahController) SearchMataKuliahActiveByTahunId(c *gin.Context) {
 	keyword := c.Query("keyword")
-	obeId, err := strconv.Atoi(c.Param("obeId"))
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeIdAndKeyword(obeId, keyword)
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	mataKuliah, err := m.mataKuliahRepo.GetMataKuliahByObeIdTahunIdAndKeyword(obe.ID, tahunId, keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -91,13 +103,13 @@ func (m *mataKuliahController) SearchMataKuliahByObeId(c *gin.Context) {
 
 func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 	var body struct {
-		KodeMk    string `json:"kode_mk" binding:"required"`
-		Nama      string `json:"nama" binding:"required"`
-		Deskripsi string `json:"deskripsi" binding:"required"`
-		Sks       int    `json:"sks" binding:"required"`
-		Semester  int    `json:"semester" binding:"required"`
-		Prasyarat string `json:"prasyarat"`
-		OBEId     int    `json:"obe_id" binding:"required"`
+		KodeMk        string `json:"kode_mk" binding:"required"`
+		Nama          string `json:"nama" binding:"required"`
+		Deskripsi     string `json:"deskripsi" binding:"required"`
+		Sks           int    `json:"sks" binding:"required"`
+		Semester      int    `json:"semester" binding:"required"`
+		Prasyarat     string `json:"prasyarat"`
+		TahunAjaranId int    `json:"tahun_ajaran_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -123,8 +135,10 @@ func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "semester can't be empty"})
 		return
 	}
-	if body.OBEId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "obe_id can't be empty"})
+
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -135,7 +149,8 @@ func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 	mataKuliah.Sks = body.Sks
 	mataKuliah.Semester = body.Semester
 	mataKuliah.Prasyarat = body.Prasyarat
-	mataKuliah.OBEId = body.OBEId
+	mataKuliah.OBEId = obe.ID
+	mataKuliah.TahunAjaranId = body.TahunAjaranId
 	if err := m.mataKuliahRepo.CreateMataKuliah(mataKuliah); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -145,13 +160,13 @@ func (m *mataKuliahController) CreateMataKuliah(c *gin.Context) {
 
 func (m *mataKuliahController) UpdateMataKuliah(c *gin.Context) {
 	var body struct {
-		KodeMk    string `json:"kode_mk" binding:"required"`
-		Nama      string `json:"nama" binding:"required"`
-		Deskripsi string `json:"deskripsi" binding:"required"`
-		Sks       int    `json:"sks" binding:"required"`
-		Semester  int    `json:"semester" binding:"required"`
-		Prasyarat string `json:"prasyarat"`
-		OBEId     int    `json:"obe_id" binding:"required"`
+		KodeMk        string `json:"kode_mk" binding:"required"`
+		Nama          string `json:"nama" binding:"required"`
+		Deskripsi     string `json:"deskripsi" binding:"required"`
+		Sks           int    `json:"sks" binding:"required"`
+		Semester      int    `json:"semester" binding:"required"`
+		Prasyarat     string `json:"prasyarat"`
+		TahunAjaranId int    `json:"tahun_ajaran_id" binding:"required"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -182,8 +197,10 @@ func (m *mataKuliahController) UpdateMataKuliah(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "semester can't be empty"})
 		return
 	}
-	if body.OBEId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "obe_id can't be empty"})
+
+	obe, err := m.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -194,7 +211,8 @@ func (m *mataKuliahController) UpdateMataKuliah(c *gin.Context) {
 	mataKuliah.Sks = body.Sks
 	mataKuliah.Semester = body.Semester
 	mataKuliah.Prasyarat = body.Prasyarat
-	mataKuliah.OBEId = body.OBEId
+	mataKuliah.OBEId = obe.ID
+	mataKuliah.TahunAjaranId = body.TahunAjaranId
 	mataKuliah.ID = id
 	if err := m.mataKuliahRepo.UpdateMataKuliah(mataKuliah); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

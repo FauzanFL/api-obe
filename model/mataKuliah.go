@@ -9,6 +9,7 @@ type MataKuliah struct {
 	Semester  int    `json:"semester"`
 	Prasyarat string `json:"prasyarat"`
 	OBEId     int    `json:"obe_id"`
+	TahunAjaranId int `json:"tahun_ajaran_id"`
 }
 
 type RPS struct {

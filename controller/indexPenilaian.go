@@ -5,7 +5,6 @@ import (
 	repo "api-obe/repository"
 	"net/http"
 	"strconv"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )

@@ -17,16 +17,16 @@ type TahunAjaranRepository interface {
 }
 
 type tahunAjaranRepository struct {
-	dbPenilaian *gorm.DB
+	dbKurikulum *gorm.DB
 }
 
-func NewTahunAjaranRepo(dbPenilaian *gorm.DB) TahunAjaranRepository {
-	return &tahunAjaranRepository{dbPenilaian}
+func NewTahunAjaranRepo(dbKurikulum *gorm.DB) TahunAjaranRepository {
+	return &tahunAjaranRepository{dbKurikulum}
 }
 
 func (p *tahunAjaranRepository) GetTahunAjaran() ([]model.TahunAjaran, error) {
 	var tahunAjaran []model.TahunAjaran
-	err := p.dbPenilaian.Order("tahun desc").Find(&tahunAjaran).Error
+	err := p.dbKurikulum.Order("tahun desc").Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
 	}
@@ -35,7 +35,7 @@ func (p *tahunAjaranRepository) GetTahunAjaran() ([]model.TahunAjaran, error) {
 
 func (p *tahunAjaranRepository) GetTahunAjaranById(id int) (model.TahunAjaran, error) {
 	var tahunAjaran model.TahunAjaran
-	err := p.dbPenilaian.First(&tahunAjaran, id).Error
+	err := p.dbKurikulum.First(&tahunAjaran, id).Error
 	if err != nil {
 		return model.TahunAjaran{}, err
 	}
@@ -44,7 +44,7 @@ func (p *tahunAjaranRepository) GetTahunAjaranById(id int) (model.TahunAjaran, e
 
 func (p *tahunAjaranRepository) GetTahunAjaranByKeyword(keyword string) ([]model.TahunAjaran, error) {
 	var tahunAjaran []model.TahunAjaran
-	err := p.dbPenilaian.Where("tahun LIKE ? OR semester LIKE ?", "%"+keyword+"%", "%"+keyword+"%").Find(&tahunAjaran).Error
+	err := p.dbKurikulum.Where("tahun LIKE ? OR semester LIKE ?", "%"+keyword+"%", "%"+keyword+"%").Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
 	}
@@ -53,7 +53,7 @@ func (p *tahunAjaranRepository) GetTahunAjaranByKeyword(keyword string) ([]model
 
 func (p *tahunAjaranRepository) GetTahunAjaranByMonth(currentMonth int) ([]model.TahunAjaran, error) {
 	var tahunAjaran []model.TahunAjaran
-	err := p.dbPenilaian.Where("bulan_mulai <= ? AND bulan_selesai >= ?", currentMonth, currentMonth).Find(&tahunAjaran).Error
+	err := p.dbKurikulum.Where("bulan_mulai <= ? AND bulan_selesai >= ?", currentMonth, currentMonth).Find(&tahunAjaran).Error
 	if err != nil {
 		return []model.TahunAjaran{}, err
 	}
@@ -61,16 +61,16 @@ func (p *tahunAjaranRepository) GetTahunAjaranByMonth(currentMonth int) ([]model
 }
 
 func (p *tahunAjaranRepository) CreateTahunAjaran(tahunAjar model.TahunAjaran) error {
-	err := p.dbPenilaian.Create(&tahunAjar).Error
+	err := p.dbKurikulum.Create(&tahunAjar).Error
 	return err
 }
 
 func (p *tahunAjaranRepository) UpdateTahunAjaran(tahunAjar model.TahunAjaran) error {
-	err := p.dbPenilaian.Save(&tahunAjar).Error
+	err := p.dbKurikulum.Save(&tahunAjar).Error
 	return err
 }
 
 func (p *tahunAjaranRepository) DeleteTahunAjaran(id int) error {
-	err := p.dbPenilaian.Delete(&model.TahunAjaran{}, id).Error
+	err := p.dbKurikulum.Delete(&model.TahunAjaran{}, id).Error
 	return err
 }

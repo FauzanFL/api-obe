@@ -11,8 +11,8 @@ type MataKuliahRepository interface {
 	GetMataKuliahById(id int) (model.MataKuliah, error)
 	GetCLOFromMataKuliah(id int) ([]model.CLO, error)
 	GetPLOFromMataKuliah(id int) ([]model.PLO, error)
-	GetMataKuliahByObeId(obeId int) ([]model.MataKuliah, error)
-	GetMataKuliahByObeIdAndKeyword(obeId int, keyword string) ([]model.MataKuliah, error)
+	GetMataKuliahByObeIdAndTahunId(obeId int, tahunId int) ([]model.MataKuliah, error)
+	GetMataKuliahByObeIdTahunIdAndKeyword(obeId int, tahunId int, keyword string) ([]model.MataKuliah, error)
 	GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error)
 	GetMataKuliahByDosenObeIdAndKeyword(obeId int, dosenId int, keyword string) ([]model.MataKuliah, error)
 	CreateMataKuliah(mataKuliah model.MataKuliah) error
@@ -64,19 +64,19 @@ func (m *mataKuliahRepository) GetPLOFromMataKuliah(id int) ([]model.PLO, error)
 	return plo, nil
 }
 
-func (m *mataKuliahRepository) GetMataKuliahByObeId(obeId int) ([]model.MataKuliah, error) {
+func (m *mataKuliahRepository) GetMataKuliahByObeIdAndTahunId(obeId int, tahunId int) ([]model.MataKuliah, error) {
 	var mataKuliah []model.MataKuliah
-	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ?", obeId).Find(&mataKuliah).Error
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND tahun_ajaran_id = ?", obeId, tahunId).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}
 	return mataKuliah, nil
 }
 
-func (m *mataKuliahRepository) GetMataKuliahByObeIdAndKeyword(obeId int, keyword string) ([]model.MataKuliah, error) {
+func (m *mataKuliahRepository) GetMataKuliahByObeIdTahunIdAndKeyword(obeId int, tahunId int, keyword string) ([]model.MataKuliah, error) {
 	key := "%" + keyword + "%"
 	var mataKuliah []model.MataKuliah
-	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND kode_mk like ? OR nama like ?", obeId, key, key).Find(&mataKuliah).Error
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND tahun_ajaran_id = ? AND kode_mk like ? OR nama like ?", obeId, tahunId, key, key).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}
