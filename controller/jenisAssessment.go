@@ -12,6 +12,7 @@ import (
 type JenisAssessmentController interface {
 	GetJenisAssessment(c *gin.Context)
 	CreateJenisAssessment(c *gin.Context)
+	UpdateJenisAssessment(c *gin.Context)
 	DeleteJenisAssessment(c *gin.Context)
 }
 
@@ -54,6 +55,36 @@ func (ja *jenisAssessmentController) CreateJenisAssessment(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "Jenis assessment added successfully"})
+}
+
+func (ja *jenisAssessmentController) UpdateJenisAssessment(c *gin.Context) {
+	var body struct {
+		Nama string `json:"nama" binding:"required"`
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := c.Bind(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if body.Nama == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama can't be empty"})
+		return
+	}
+
+	var jenisAssessment model.JenisAssessment
+	jenisAssessment.ID = id
+	jenisAssessment.Nama = body.Nama
+	if err := ja.jenisAssessmentRepo.UpdateJenisAssessment(jenisAssessment); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "Jenis assessment updated successfully"})
 }
 
 func (ja *jenisAssessmentController) DeleteJenisAssessment(c *gin.Context) {

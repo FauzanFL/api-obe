@@ -11,8 +11,8 @@ import (
 )
 
 type PlottingDosenMkController interface {
-	GetPlottingDosenMk(c *gin.Context)
-	SearchPlottingDosenMk(c *gin.Context)
+	GetPlottingDosenMkByTahun(c *gin.Context)
+	SearchPlottingDosenMkByTahun(c *gin.Context)
 	GetKelasDosenByMk(c *gin.Context)
 	GetKelasMkByMk(c *gin.Context)
 	CreatePlottingDosenMk(c *gin.Context)
@@ -37,20 +37,26 @@ func NewPlottingDosenMkController(plottingDosenMkRepo repo.PlottingDosenMkReposi
 	}
 }
 
-func (m *plottingDosenMkController) GetPlottingDosenMk(c *gin.Context) {
+func (m *plottingDosenMkController) GetPlottingDosenMkByTahun(c *gin.Context) {
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	obe, err := m.perancanganRepo.GetActivePerancanganObe()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeId(obe.ID)
+	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeIdAndTahunId(obe.ID, tahunId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	var plotDatas []model.PlotData
+	plotDatas := []model.PlotData{}
 	for _, v := range plottingDosenMk {
 		var plot model.PlotData
 		plot.ID = v.ID
@@ -66,7 +72,7 @@ func (m *plottingDosenMkController) GetPlottingDosenMk(c *gin.Context) {
 	c.JSON(http.StatusOK, plotDatas)
 }
 
-func (m *plottingDosenMkController) SearchPlottingDosenMk(c *gin.Context) {
+func (m *plottingDosenMkController) SearchPlottingDosenMkByTahun(c *gin.Context) {
 	keyword := strings.ToUpper(c.Query("keyword"))
 	obe, err := m.perancanganRepo.GetActivePerancanganObe()
 	if err != nil {
@@ -74,7 +80,13 @@ func (m *plottingDosenMkController) SearchPlottingDosenMk(c *gin.Context) {
 		return
 	}
 
-	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeId(obe.ID)
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plottingDosenMk, err := m.plottingDosenMkRepo.GetPlottingDosenMkByObeIdAndTahunId(obe.ID, tahunId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

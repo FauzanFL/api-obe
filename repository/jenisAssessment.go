@@ -9,6 +9,7 @@ import (
 type JenisAssessmentRepository interface {
 	GetJenisAssessment() ([]model.JenisAssessment, error)
 	CreateJenisAssessment(jenisAssessment model.JenisAssessment) error
+	UpdateJenisAssessment(jenisAssessment model.JenisAssessment) error
 	DeleteJenisAssessment(id int) error
 }
 
@@ -31,6 +32,14 @@ func (j *jenisAssessmentRepository) GetJenisAssessment() ([]model.JenisAssessmen
 
 func (j *jenisAssessmentRepository) CreateJenisAssessment(jenisAssessment model.JenisAssessment) error {
 	err := j.dbKurikulum.Create(&jenisAssessment).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (j *jenisAssessmentRepository) UpdateJenisAssessment(jenisAssessment model.JenisAssessment) error {
+	err := j.dbKurikulum.Save(&jenisAssessment).Error
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 
 type PlottingDosenMkRepository interface {
 	GetPlottingDosenMk() ([]model.PlottingDosenMk, error)
-	GetPlottingDosenMkByObeId(obeId int) ([]model.PlottingDosenMk, error)
+	GetPlottingDosenMkByObeIdAndTahunId(obeId int, tahunId int) ([]model.PlottingDosenMk, error)
 	GetPlottingDosenByMkId(mkId int) ([]model.PlottingDosenMk, error)
 	GetPlottingDosenByMkIdAndDosenId(mkId int, dosenId int) ([]model.PlottingDosenMk, error)
 	CreatePlottingDosenMk(plottingDosenMk model.PlottingDosenMk) error
@@ -32,9 +32,9 @@ func (p *plottingDosenMkRepository) GetPlottingDosenMk() ([]model.PlottingDosenM
 	return plottingDosenMk, nil
 }
 
-func (p *plottingDosenMkRepository) GetPlottingDosenMkByObeId(obeId int) ([]model.PlottingDosenMk, error) {
+func (p *plottingDosenMkRepository) GetPlottingDosenMkByObeIdAndTahunId(obeId int, tahunId int) ([]model.PlottingDosenMk, error) {
 	var plottingDosenMk []model.PlottingDosenMk
-	err := p.dbKurikulum.Where("mk_id IN (?)", p.dbKurikulum.Model(&model.MataKuliah{}).Select("id").Where("obe_id = ?", obeId)).Find(&plottingDosenMk).Error
+	err := p.dbKurikulum.Where("mk_id IN (?)", p.dbKurikulum.Model(&model.MataKuliah{}).Select("id").Where("obe_id = ? AND tahun_ajaran_id = ?", obeId, tahunId)).Find(&plottingDosenMk).Error
 	if err != nil {
 		return []model.PlottingDosenMk{}, err
 	}

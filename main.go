@@ -182,10 +182,10 @@ func main() {
 
 		plottingDosenMkRouter := apiRouter.Group("/plotting_dosen_mk")
 		{
-			plottingDosenMkRouter.GET("/", authMiddleware.RequireAdminAuth, plottingDosenController.GetPlottingDosenMk)
+			plottingDosenMkRouter.GET("/tahun/:tahunId", authMiddleware.RequireAdminAuth, plottingDosenController.GetPlottingDosenMkByTahun)
 			plottingDosenMkRouter.GET("/matakuliah/:mkId/kelas", authMiddleware.RequireAdminAuth, plottingDosenController.GetKelasMkByMk)
 			plottingDosenMkRouter.GET("/matakuliah/:mkId/kelas/dosen", authMiddleware.RequireDosenAuth, plottingDosenController.GetKelasDosenByMk)
-			plottingDosenMkRouter.GET("/search", authMiddleware.RequireAdminAuth, plottingDosenController.SearchPlottingDosenMk)
+			plottingDosenMkRouter.GET("/tahun/:tahunId/search", authMiddleware.RequireAdminAuth, plottingDosenController.SearchPlottingDosenMkByTahun)
 			plottingDosenMkRouter.POST("/", authMiddleware.RequireAdminAuth, plottingDosenController.CreatePlottingDosenMk)
 			plottingDosenMkRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, plottingDosenController.DeletePlottingDosenMk)
 		}
@@ -206,6 +206,7 @@ func main() {
 		{
 			jenisAssessmentRouter.GET("/", authMiddleware.RequireAuth, jenisAssessmentController.GetJenisAssessment)
 			jenisAssessmentRouter.POST("/", authMiddleware.RequireAuth, jenisAssessmentController.CreateJenisAssessment)
+			jenisAssessmentRouter.PUT("/update/:id", authMiddleware.RequireAuth, jenisAssessmentController.UpdateJenisAssessment)
 			jenisAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, jenisAssessmentController.DeleteJenisAssessment)
 		}
 
