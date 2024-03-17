@@ -33,18 +33,16 @@ type penilaianController struct {
 	penilaianRepo   repo.PenilaianRepository
 	cloRepo         repo.CloRepository
 	assessmentRepo  repo.LembarAssessmentRepository
-	mahasiswaRepo   repo.MahasiswaRepository
 	dosenRepo       repo.DosenRepository
 	ploRepo         repo.PloRepository
 	perancanganRepo repo.PerancanganObeRepository
 }
 
-func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, mahasiswaRepo repo.MahasiswaRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository) PenilaianController {
+func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository) PenilaianController {
 	return &penilaianController{
 		penilaianRepo,
 		cloRepo,
 		assessmentRepo,
-		mahasiswaRepo,
 		dosenRepo,
 		ploRepo,
 		perancanganRepo,
@@ -79,62 +77,9 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		return
 	}
 
-	clo, err := p.cloRepo.GetCLOByMkId(mkId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	fmt.Println(kelasId, tahunId, mkId)
 
-	cloWithAssessment := []model.CLOWithAssessment{}
-	assessmentsMhs := []model.LembarAssessmentWithJenis{}
-	for _, v := range clo {
-		assessments := []model.LembarAssessmentWithJenis{}
-		result, err := p.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		assessments = append(assessments, result...)
-		assessmentsMhs = append(assessmentsMhs, assessments...)
-		cloWithAssessment = append(cloWithAssessment, model.CLOWithAssessment{
-			ID:          v.ID,
-			PLOId:       v.PLOId,
-			Nama:        v.Nama,
-			Deskripsi:   v.Deskripsi,
-			Bobot:       v.Bobot,
-			MkId:        v.MkId,
-			Assessments: assessments,
-		})
-	}
-
-	mahasiswa, err := p.mahasiswaRepo.GetMahasiswaByKelasMataKuliah(mkId, kelasId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	mahasiswaWithNilai := []model.MahasiswaWithPenilaian{}
-	for _, v := range mahasiswa {
-		nilaiAssessments := []model.Penilaian{}
-		for _, val := range assessmentsMhs {
-			nilai, _ := p.penilaianRepo.GetPenilaianByMhsIdAndAssessmentId(v.ID, val.ID, tahunId)
-			if nilai.ID != 0 {
-				nilaiAssessments = append(nilaiAssessments, nilai)
-			}
-		}
-		mahasiswaWithNilai = append(mahasiswaWithNilai, model.MahasiswaWithPenilaian{
-			ID:        v.ID,
-			NIM:       v.NIM,
-			Nama:      v.Nama,
-			KelasId:   v.KelasId,
-			Penilaian: nilaiAssessments,
-		})
-	}
-
-	dataPenilaian := model.PenilaianData{
-		CLOAsessment:   cloWithAssessment,
-		MahasiswaNilai: mahasiswaWithNilai,
-	}
+	dataPenilaian := model.PenilaianData{}
 	c.JSON(http.StatusOK, dataPenilaian)
 }
 

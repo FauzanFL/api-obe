@@ -81,11 +81,9 @@ func main() {
 	tahunAjaranRepo := repo.NewTahunAjaranRepo(dbKurikulum)
 	userRepo := repo.NewUserRepo(dbUser)
 	dosenRepo := repo.NewDosenRepo(dbUser)
-	mkMahasiswaRepo := repo.NewMkMahasiswaRepo(dbPenilaian)
 	penilaianRepo := repo.NewPenilaianRepo(dbPenilaian)
 	beritaAcaraRepo := repo.NewBeritaAcaraRepo(dbPenilaian)
 	kelasRepo := repo.NewKelasRepo(dbPenilaian)
-	mahasiswaRepo := repo.NewMahasiswaRepo(dbPenilaian)
 	indexPenilaianRepo := repo.NewIndexPenilaianRepo(dbPenilaian)
 
 	authMiddleware := middleware.NewAuthMiddleware(userRepo)
@@ -100,12 +98,10 @@ func main() {
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo, cloRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
 	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
-	mkMahasiswaController := controller.NewMkMahasiswaController(mkMahasiswaRepo)
-	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, mahasiswaRepo, dosenRepo, ploRepo, perancanganObeRepo)
+	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, dosenRepo, ploRepo, perancanganObeRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
-	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo, dosenRepo, tahunAjaranRepo, lembarAssessmentRepo, mahasiswaRepo, penilaianRepo)
+	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo, dosenRepo, tahunAjaranRepo, lembarAssessmentRepo, penilaianRepo)
 	kelasController := controller.NewKelasController(kelasRepo)
-	mahasiswaController := controller.NewMahasiswaController(mahasiswaRepo)
 	indexPenilaianController := controller.NewIndexPenilaianController(indexPenilaianRepo)
 
 	apiRouter := r.Group("/api")
@@ -210,11 +206,6 @@ func main() {
 			jenisAssessmentRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, jenisAssessmentController.DeleteJenisAssessment)
 		}
 
-		mkMahasiswaRouter := apiRouter.Group("/mk_mahasiswa")
-		{
-			mkMahasiswaRouter.GET("/", authMiddleware.RequireAuth, mkMahasiswaController.GetMkMahasiswa)
-		}
-
 		penilaianRouter := apiRouter.Group("/penilaian")
 		{
 			penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
@@ -265,13 +256,6 @@ func main() {
 			indexPenilaianRouter.POST("/", authMiddleware.RequireAdminAuth, indexPenilaianController.CreateIndexPenilaian)
 			indexPenilaianRouter.PUT("/update/:id", authMiddleware.RequireAdminAuth, indexPenilaianController.UpdateIndexPenilaian)
 			indexPenilaianRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, indexPenilaianController.DeleteIndexPenilaian)
-		}
-
-		mahasiswaRouter := apiRouter.Group("/mahasiswa")
-		{
-			mahasiswaRouter.GET("/", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswa)
-			mahasiswaRouter.GET("/mata_kuliah/:mkId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByMataKuliah)
-			mahasiswaRouter.GET("/mata_kuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, mahasiswaController.GetMahasiswaByKelasMataKuliah)
 		}
 	}
 

@@ -22,18 +22,15 @@ type beritaAcaraController struct {
 	dosenRepo       repo.DosenRepository
 	tahunAjaranRepo repo.TahunAjaranRepository
 	assessmentRepo  repo.LembarAssessmentRepository
-	mahasiswaRepo   repo.MahasiswaRepository
 	penilaianRepo   repo.PenilaianRepository
 }
 
 func NewBeritaAcaraController(beritaAcaraRepo repo.BeritaAcaraRepository, dosenRepo repo.DosenRepository,
 	tahunAjaranRepo repo.TahunAjaranRepository,
-	assessmentRepo repo.LembarAssessmentRepository,
-	mahasiswaRepo repo.MahasiswaRepository, penilaianRepo repo.PenilaianRepository) BeritaAcaraController {
+	assessmentRepo repo.LembarAssessmentRepository, penilaianRepo repo.PenilaianRepository) BeritaAcaraController {
 	return &beritaAcaraController{beritaAcaraRepo, dosenRepo,
 		tahunAjaranRepo,
 		assessmentRepo,
-		mahasiswaRepo,
 		penilaianRepo}
 }
 
@@ -149,12 +146,6 @@ func (b *beritaAcaraController) CreateManyBeritaAcara(c *gin.Context) {
 			return
 		}
 
-		mhs, err := b.mahasiswaRepo.GetMahasiswaById(v.MhsId)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
 		tahun, err := b.tahunAjaranRepo.GetTahunAjaranById(v.TahunAjaranId)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -175,7 +166,7 @@ func (b *beritaAcaraController) CreateManyBeritaAcara(c *gin.Context) {
 		var beritaAcara model.BeritaAcara
 		beritaAcara.TahunAjaran = fmt.Sprintf("%s %s", tahun.Tahun, tahun.Semester)
 		beritaAcara.Dosen = dosen.KodeDosen
-		beritaAcara.NIM = mhs.NIM
+		beritaAcara.NIM = ""
 		beritaAcara.Assessment = assessment.Nama
 		beritaAcara.Nilai = v.Nilai
 		beritaAcara.PenilaianId = v.PenilaianId
