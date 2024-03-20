@@ -9,10 +9,7 @@ import (
 type PenilaianRepository interface {
 	GetPenilaian() ([]model.Penilaian, error)
 	GetPenilaianById(id int) (model.Penilaian, error)
-	GetPenilaianByMhsIdAndAssessmentId(mhsId int, assessmentId int, tahunId int) (model.Penilaian, error)
-	GetPenilaianByAssessmentId(assessmentId int, tahunId int) ([]model.Penilaian, error)
-	GetPenilaianByAssessmentIds(assessmentIds []int, tahunId int) ([]model.Penilaian, error)
-	GetPenilaianByKelas(kelasId int, tahunId int) ([]model.Penilaian, error)
+	GetPenilaianByKelasIdAndMkId(kelasId int, mkId int) (model.Penilaian, error)
 	CreatePenilaian(penilaian model.Penilaian) error
 	UpdatePenilaian(penilaian model.Penilaian) error
 	UpdateStatusToFinal(id int) error
@@ -45,38 +42,11 @@ func (p *penilaianRepository) GetPenilaianById(id int) (model.Penilaian, error) 
 	return penilaian, nil
 }
 
-func (p *penilaianRepository) GetPenilaianByAssessmentId(assessmentId int, tahunId int) ([]model.Penilaian, error) {
-	var penilaian []model.Penilaian
-	err := p.dbPenilaian.Where("assessment_id = ? AND tahun_ajaran_id = ?", assessmentId, tahunId).Find(&penilaian).Error
-	if err != nil {
-		return []model.Penilaian{}, err
-	}
-	return penilaian, nil
-}
-
-func (p *penilaianRepository) GetPenilaianByAssessmentIds(assessmentIds []int, tahunId int) ([]model.Penilaian, error) {
-	var penilaian []model.Penilaian
-	err := p.dbPenilaian.Where("assessment_id IN (?) AND tahun_ajaran_id = ?", assessmentIds, tahunId).Find(&penilaian).Error
-	if err != nil {
-		return []model.Penilaian{}, err
-	}
-	return penilaian, nil
-}
-
-func (p *penilaianRepository) GetPenilaianByMhsIdAndAssessmentId(mhsId int, assessmentId int, tahunId int) (model.Penilaian, error) {
+func (p *penilaianRepository) GetPenilaianByKelasIdAndMkId(kelasId int, mkId int) (model.Penilaian, error) {
 	var penilaian model.Penilaian
-	err := p.dbPenilaian.Where("mhs_id = ? AND assessment_id = ? AND tahun_ajaran_id = ?", mhsId, assessmentId, tahunId).First(&penilaian).Error
+	err := p.dbPenilaian.Where("kelas_id = ? AND mk_id = ?", kelasId, mkId).First(&penilaian).Error
 	if err != nil {
 		return model.Penilaian{}, err
-	}
-	return penilaian, nil
-}
-
-func (p *penilaianRepository) GetPenilaianByKelas(kelasId int, tahunId int) ([]model.Penilaian, error) {
-	var penilaian []model.Penilaian
-	err := p.dbPenilaian.Where("mhs_id IN (?) AND tahun_ajaran_id = ?", p.dbPenilaian.Table("mahasiswa").Where("kelas_id = ?", kelasId).Select("id"), tahunId).Find(&penilaian).Error
-	if err != nil {
-		return []model.Penilaian{}, err
 	}
 	return penilaian, nil
 }

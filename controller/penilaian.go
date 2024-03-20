@@ -5,13 +5,13 @@ import (
 	"api-obe/model"
 	repo "api-obe/repository"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/maxbeatty/golang-book/chapter11/math"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 )
@@ -22,7 +22,6 @@ type PenilaianController interface {
 	GetDataPenilaianCLOPLOByMk(c *gin.Context)
 	GetDataPenilaianPLO(c *gin.Context)
 	GetPenilaianById(c *gin.Context)
-	GetPenilaianByKelas(c *gin.Context)
 	CreatePenilaian(c *gin.Context)
 	UpdatePenilaian(c *gin.Context)
 	DeletePenilaian(c *gin.Context)
@@ -65,21 +64,57 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		return
 	}
 
-	tahunId, err := strconv.Atoi(c.Param("tahunId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
 	mkId, err := strconv.Atoi(c.Param("mkId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Println(kelasId, tahunId, mkId)
+	clo, err := p.cloRepo.GetCLOByMkId(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	var listCLoWithAssessment []model.CLOWithAssessment
 
-	dataPenilaian := model.PenilaianData{}
+	for _, v := range clo {
+		assessments, err := p.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		cloWithAssessment := model.CLOWithAssessment{
+			ID:          v.ID,
+			PLOId:       v.PLOId,
+			Nama:        v.Nama,
+			Deskripsi:   v.Deskripsi,
+			Bobot:       v.Bobot,
+			MkId:        v.MkId,
+			Assessments: assessments,
+		}
+		listCLoWithAssessment = append(listCLoWithAssessment, cloWithAssessment)
+	}
+
+	penilaianRes := model.PenilaianResp{}
+	penilaian, _ := p.penilaianRepo.GetPenilaianByKelasIdAndMkId(kelasId, mkId)
+
+	nilaiMahasiswa := []model.NilaiMahasiswa{}
+	err = json.Unmarshal([]byte(penilaian.Nilai), &nilaiMahasiswa)
+	if err != nil {
+		fmt.Println("Error:", err)
+		penilaianRes.Nilai = []model.NilaiMahasiswa{}
+	}
+	penilaianRes.ID = penilaian.ID
+	penilaianRes.Status = penilaian.Status
+	penilaianRes.Nilai = nilaiMahasiswa
+	penilaianRes.MkId = penilaian.MkId
+	penilaianRes.KelasId = penilaian.KelasId
+
+	dataPenilaian := model.PenilaianData{
+		CLOAsessment: listCLoWithAssessment,
+		Penilaian:    penilaianRes,
+	}
 	c.JSON(http.StatusOK, dataPenilaian)
 }
 
@@ -96,82 +131,9 @@ func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
 		return
 	}
 
-	clo, err := p.cloRepo.GetCLOByMkId(mkId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	fmt.Println(mkId, tahunId)
 
-	listCloWithNilai := make([]model.CLOWithNilai, len(clo))
-	listPloWithNilai := []model.PLOWithNilai{}
-	listPlo := map[int]model.PLO{}
-
-	for i, v := range clo {
-		assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
-		var nilaiFinal = map[int][]float64{}
-		if len(assessments) > 0 {
-			for _, val := range assessments {
-				penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID, tahunId)
-				if len(penilaian) > 0 {
-					for _, value := range penilaian {
-						nilaiFinal[value.MhsId] = append(nilaiFinal[value.MhsId], value.Nilai)
-					}
-				} else {
-					nilaiFinal[0] = []float64{0}
-				}
-			}
-		} else {
-			nilaiFinal = map[int][]float64{
-				0: {0},
-			}
-		}
-
-		plo, _ := p.ploRepo.GetPloById(v.PLOId)
-
-		var total float64 = 0.0
-		for _, numbers := range nilaiFinal {
-			total += math.Average(numbers)
-		}
-
-		avg := total / float64(len(nilaiFinal))
-		var formattedAvg = formatAvg(avg)
-		cloWithNilai := model.CLOWithNilai{
-			ID:    v.ID,
-			Nama:  v.Nama,
-			PLOId: v.PLOId,
-			Nilai: formattedAvg,
-		}
-		listCloWithNilai[i] = cloWithNilai
-
-		listPlo[plo.ID] = plo
-	}
-
-	for _, v := range listPlo {
-		var nilaiFinal = []float64{}
-		for _, val := range listCloWithNilai {
-			if v.ID == val.PLOId {
-				nilaiFinal = append(nilaiFinal, val.Nilai)
-			}
-		}
-		avg := math.Average(nilaiFinal)
-		var formattedAvg = formatAvg(avg)
-		ploWithNilai := model.PLOWithNilai{
-			ID:    v.ID,
-			Nama:  v.Nama,
-			Nilai: formattedAvg,
-		}
-		listPloWithNilai = append(listPloWithNilai, ploWithNilai)
-	}
-
-	var response struct {
-		Clo []model.CLOWithNilai `json:"clo"`
-		Plo []model.PLOWithNilai `json:"plo"`
-	}
-
-	response.Clo = listCloWithNilai
-	response.Plo = listPloWithNilai
-
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, []string{})
 }
 
 func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
@@ -181,64 +143,9 @@ func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
 		return
 	}
 
-	obe, err := p.perancanganRepo.GetActivePerancanganObe()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	fmt.Println(tahunId)
 
-	plo, err := p.ploRepo.GetPloByObeId(obe.ID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	listPloWithNilai := []model.PLOWithNilai{}
-	for _, v := range plo {
-		clo, _ := p.cloRepo.GetCLOByPLOId(v.ID)
-		var nilaiFinal float64
-		if len(clo) > 0 {
-			var nilaiClo []float64
-			for _, c := range clo {
-				assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
-				for _, val := range assessments {
-					penilaian, _ := p.penilaianRepo.GetPenilaianByAssessmentId(val.ID, tahunId)
-					nilai := make(map[int][]float64)
-					if len(penilaian) > 0 {
-						for _, value := range penilaian {
-							nilai[value.MhsId] = append(nilai[value.MhsId], value.Nilai)
-						}
-					} else {
-						nilai[0] = []float64{0}
-					}
-					var total float64 = 0.0
-					for _, numbers := range nilai {
-						total += math.Average(numbers)
-					}
-					avg := total / float64(len(nilai))
-					nilaiClo = append(nilaiClo, avg)
-				}
-
-			}
-
-			fmt.Println(nilaiClo)
-
-			nilaiFinal = math.Average(nilaiClo)
-		} else {
-			nilaiFinal = 0
-		}
-
-		var formattedAvg = formatAvg(nilaiFinal)
-
-		ploWithNilai := model.PLOWithNilai{
-			ID:    v.ID,
-			Nama:  v.Nama,
-			Nilai: formattedAvg,
-		}
-		listPloWithNilai = append(listPloWithNilai, ploWithNilai)
-	}
-
-	c.JSON(http.StatusOK, listPloWithNilai)
+	c.JSON(http.StatusOK, []string{})
 }
 
 func (p *penilaianController) GetPenilaianById(c *gin.Context) {
@@ -255,75 +162,54 @@ func (p *penilaianController) GetPenilaianById(c *gin.Context) {
 	c.JSON(http.StatusOK, penilaian)
 }
 
-func (p *penilaianController) GetPenilaianByKelas(c *gin.Context) {
-	kelasId, err := strconv.Atoi(c.Param("kelasId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	tahunId, err := strconv.Atoi(c.Param("tahunId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	penilaian, err := p.penilaianRepo.GetPenilaianByKelas(kelasId, tahunId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, penilaian)
-}
-
 func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 	var body struct {
-		Nilai         float64 `json:"nilai" binding:"required"`
-		AssessmentId  int     `json:"assessment_id" binding:"required"`
-		MhsId         int     `json:"mhs_id" binding:"required"`
-		TahunAjaranId int     `json:"tahun_ajaran_id" binding:"required"`
+		Nilai   []model.NilaiMahasiswa `json:"nilai"`
+		MkId    int                    `json:"mk_id"`
+		KelasId int                    `json:"kelas_id"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if body.Nilai == 0 {
+	if body.Nilai == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nilai can't be empty"})
 		return
 	}
-	if body.AssessmentId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "assessment_id can't be empty"})
+	if body.MkId == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "mk_id can't be empty"})
 		return
 	}
-	if body.MhsId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "mhs_id can't be empty"})
-		return
-	}
-	if body.TahunAjaranId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "tahun_ajaran_id can't be empty"})
+	if body.KelasId == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kelas_id can't be empty"})
 		return
 	}
 
-	userGet, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
-		return
-	}
+	// userGet, exists := c.Get("user")
+	// if !exists {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
+	// 	return
+	// }
 
-	user := userGet.(model.User)
+	// user := userGet.(model.User)
 
-	dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	// dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	nilai, err := json.Marshal(body.Nilai)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var penilaian model.Penilaian
-	penilaian.Nilai = body.Nilai
-	penilaian.AssessmentId = body.AssessmentId
-	penilaian.MhsId = body.MhsId
-	penilaian.DosenId = dosen.ID
-	penilaian.TahunAjaranId = body.TahunAjaranId
+	penilaian.Nilai = string(nilai)
+	penilaian.Status = "draft"
+	penilaian.MkId = body.MkId
+	penilaian.KelasId = body.KelasId
 
 	if err := p.penilaianRepo.CreatePenilaian(penilaian); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -334,10 +220,9 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 
 func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 	var body struct {
-		Nilai         float64 `json:"nilai" binding:"required"`
-		AssessmentId  int     `json:"assessment_id" binding:"required"`
-		MhsId         int     `json:"mhs_id" binding:"required"`
-		TahunAjaranId int     `json:"tahun_ajaran_id" binding:"required"`
+		Nilai   []model.NilaiMahasiswa `json:"nilai"`
+		MkId    int                    `json:"mk_id"`
+		KelasId int                    `json:"kelas_id"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -348,43 +233,44 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if body.Nilai == 0 {
+	if body.Nilai == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nilai can't be empty"})
 		return
 	}
-	if body.AssessmentId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "assessment_id can't be empty"})
+	if body.MkId == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "mk_id can't be empty"})
 		return
 	}
-	if body.MhsId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "mhs_id can't be empty"})
-		return
-	}
-	if body.TahunAjaranId == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "tahun_ajaran_id can't be empty"})
+	if body.KelasId == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kelas_id can't be empty"})
 		return
 	}
 
-	userGet, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
-		return
-	}
+	// userGet, exists := c.Get("user")
+	// if !exists {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
+	// 	return
+	// }
 
-	user := userGet.(model.User)
+	// user := userGet.(model.User)
 
-	dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	// dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	nilai, err := json.Marshal(body.Nilai)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var penilaian model.Penilaian
-	penilaian.Nilai = body.Nilai
-	penilaian.AssessmentId = body.AssessmentId
-	penilaian.MhsId = body.MhsId
-	penilaian.DosenId = dosen.ID
-	penilaian.TahunAjaranId = body.TahunAjaranId
+	penilaian.Nilai = string(nilai)
+	penilaian.Status = "draft"
+	penilaian.MkId = body.MkId
+	penilaian.KelasId = body.KelasId
 	penilaian.ID = id
 
 	if err := p.penilaianRepo.UpdatePenilaian(penilaian); err != nil {

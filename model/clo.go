@@ -16,7 +16,7 @@ type CLOWithAssessment struct {
 	Deskripsi   string                      `json:"deskripsi"`
 	Bobot       float64                     `json:"bobot"`
 	MkId        int                         `json:"mk_id"`
-	Assessments []LembarAssessmentWithJenis `json:"assessment"`
+	Assessments []LembarAssessmentWithJenis `json:"assessments"`
 }
 
 type CLOWithNilai struct {

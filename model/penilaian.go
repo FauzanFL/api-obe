@@ -1,18 +1,35 @@
 package model
 
 type Penilaian struct {
-	ID            int     `json:"id" gorm:"primary_key"`
-	Nilai         float64 `json:"nilai"`
-	AssessmentId  int     `json:"assessment_id"`
-	MhsId         int     `json:"mhs_id"`
-	DosenId       int     `json:"dosen_id"`
-	TahunAjaranId int     `json:"tahun_ajaran_id"`
-	Status        string  `json:"status"`
+	ID      int    `json:"id" gorm:"primary_key"`
+	Nilai   string `json:"nilai"`
+	Status  string `json:"status"`
+	MkId    int    `json:"mk_id"`
+	KelasId int    `json:"kelas_id"`
+}
+
+type PenilaianResp struct {
+	ID      int              `json:"id" gorm:"primary_key"`
+	Nilai   []NilaiMahasiswa `json:"nilai"`
+	Status  string           `json:"status"`
+	MkId    int              `json:"mk_id"`
+	KelasId int              `json:"kelas_id"`
+}
+
+type NilaiMahasiswa struct {
+	NIM             string            `json:"nim"`
+	Nama            string            `json:"nama"`
+	NilaiAssessment []NilaiAssessment `json:"nilai_assessment"`
+}
+
+type NilaiAssessment struct {
+	AssessmentId int     `json:"assessment_id"`
+	Nilai        float64 `json:"nilai"`
 }
 
 type PenilaianData struct {
-	MahasiswaNilai []MahasiswaWithPenilaian `json:"mahasiswa_nilai"`
-	CLOAsessment   []CLOWithAssessment      `json:"clo_assessment"`
+	CLOAsessment []CLOWithAssessment `json:"clo_assessment"`
+	Penilaian    PenilaianResp       `json:"penilaian"`
 }
 
 func (Penilaian) TableName() string {
