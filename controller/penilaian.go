@@ -164,9 +164,9 @@ func (p *penilaianController) GetPenilaianById(c *gin.Context) {
 
 func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 	var body struct {
-		Nilai   []model.NilaiMahasiswa `json:"nilai"`
-		MkId    int                    `json:"mk_id"`
-		KelasId int                    `json:"kelas_id"`
+		Nilai   []model.NilaiMahasiswa `json:"nilai" binding:"required"`
+		MkId    int                    `json:"mk_id" binding:"required"`
+		KelasId int                    `json:"kelas_id" binding:"required"`
 	}
 	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -220,9 +220,9 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 
 func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 	var body struct {
-		Nilai   []model.NilaiMahasiswa `json:"nilai"`
-		MkId    int                    `json:"mk_id"`
-		KelasId int                    `json:"kelas_id"`
+		Nilai   []model.NilaiMahasiswa `json:"nilai" binding:"required"`
+		MkId    int                    `json:"mk_id" binding:"required"`
+		KelasId int                    `json:"kelas_id" binding:"required`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

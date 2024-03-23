@@ -232,8 +232,8 @@ func main() {
 		beritaAcaraRouter := apiRouter.Group("/berita_acara")
 		{
 			beritaAcaraRouter.GET("/", authMiddleware.RequireAuth, beritaAcaraController.GetBeritaAcara)
+			beritaAcaraRouter.GET("/penilaian/:penilaianId", authMiddleware.RequireAuth, beritaAcaraController.GetBeritaAcaraByPenilaian)
 			beritaAcaraRouter.POST("/", authMiddleware.RequireDosenAuth, beritaAcaraController.CreateBeritaAcara)
-			beritaAcaraRouter.POST("/batch", authMiddleware.RequireDosenAuth, beritaAcaraController.CreateManyBeritaAcara)
 			beritaAcaraRouter.DELETE("/delete/:id", authMiddleware.RequireAuth, beritaAcaraController.DeleteBeritaAcara)
 		}
 
