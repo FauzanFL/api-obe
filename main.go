@@ -222,6 +222,7 @@ func main() {
 		tahunAjaranRouter := apiRouter.Group("/tahun_ajaran")
 		{
 			tahunAjaranRouter.GET("/", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaran)
+			tahunAjaranRouter.GET("/:id", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaranById)
 			tahunAjaranRouter.GET("/now", authMiddleware.RequireAuth, tahunAjaranController.GetTahunAjaranNow)
 			tahunAjaranRouter.GET("/search", authMiddleware.RequireAuth, tahunAjaranController.SearchTahunAjaran)
 			tahunAjaranRouter.POST("/", authMiddleware.RequireAdminAuth, tahunAjaranController.CreateTahunAjaran)

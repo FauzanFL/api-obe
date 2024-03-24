@@ -33,7 +33,7 @@ func (r *indexPenilaianRepository) GetIndexPenilaian() ([]model.IndexPenilaian, 
 }
 func (r *indexPenilaianRepository) GetIndexPenilaianByNilai(nilai float64) (model.IndexPenilaian, error) {
 	var indexPenilaian model.IndexPenilaian
-	err := r.dbPenilaian.Where("batas_awal >= ? AND batas_akhir <= ?", nilai).First(&indexPenilaian).Error
+	err := r.dbPenilaian.Where("batas_awal <= ? AND batas_akhir >= ?", nilai, nilai).First(&indexPenilaian).Error
 	if err != nil {
 		return model.IndexPenilaian{}, err
 	}

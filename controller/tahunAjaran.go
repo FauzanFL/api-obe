@@ -13,6 +13,7 @@ import (
 
 type TahunAjaranController interface {
 	GetTahunAjaran(c *gin.Context)
+	GetTahunAjaranById(c *gin.Context)
 	GetTahunAjaranNow(c *gin.Context)
 	SearchTahunAjaran(c *gin.Context)
 	CreateTahunAjaran(c *gin.Context)
@@ -32,6 +33,21 @@ func NewTahunAjaranController(tahunAjaranRepo repo.TahunAjaranRepository) TahunA
 
 func (t *tahunAjaranController) GetTahunAjaran(c *gin.Context) {
 	tahunAjaran, err := t.tahunAjaranRepo.GetTahunAjaran()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, tahunAjaran)
+}
+
+func (t *tahunAjaranController) GetTahunAjaranById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tahunAjaran, err := t.tahunAjaranRepo.GetTahunAjaranById(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
