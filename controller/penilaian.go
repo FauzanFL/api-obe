@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maxbeatty/golang-book/chapter11/math"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 )
@@ -35,9 +36,10 @@ type penilaianController struct {
 	dosenRepo       repo.DosenRepository
 	ploRepo         repo.PloRepository
 	perancanganRepo repo.PerancanganObeRepository
+	plottingRepo    repo.PlottingDosenMkRepository
 }
 
-func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository) PenilaianController {
+func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository, plottingRepo repo.PlottingDosenMkRepository) PenilaianController {
 	return &penilaianController{
 		penilaianRepo,
 		cloRepo,
@@ -45,6 +47,7 @@ func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo
 		dosenRepo,
 		ploRepo,
 		perancanganRepo,
+		plottingRepo,
 	}
 }
 
@@ -125,27 +128,172 @@ func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
 		return
 	}
 
-	tahunId, err := strconv.Atoi(c.Param("tahunId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	userGet, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
 		return
 	}
 
-	fmt.Println(mkId, tahunId)
+	user := userGet.(model.User)
+	dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusOK, []string{})
+	plotting, err := p.plottingRepo.GetPlottingDosenByMkIdAndDosenId(mkId, dosen.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	clo, err := p.cloRepo.GetCLOByMkId(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	cloWithNilai := []model.CLOWithNilai{}
+	ploWithNilai := []model.PLOWithNilai{}
+
+	listPLO := map[int]model.PLO{}
+
+	for _, v := range clo {
+		plo, _ := p.ploRepo.GetPloById(v.PLOId)
+		listPLO[plo.ID] = plo
+
+		nilaiArr := []float64{}
+
+		assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(v.ID)
+		for _, plot := range plotting {
+			penilaian, _ := p.penilaianRepo.GetPenilaianByKelasIdAndMkId(plot.KelasId, mkId)
+			if penilaian.ID != 0 {
+				nilaiMahasiswa := []model.NilaiMahasiswa{}
+				err = json.Unmarshal([]byte(penilaian.Nilai), &nilaiMahasiswa)
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+
+				mhsNilaiArr := []float64{}
+				for _, mhs := range nilaiMahasiswa {
+					mhsTotal := 0.0
+					for _, nilai := range mhs.NilaiAssessment {
+						for _, assessment := range assessments {
+							if nilai.AssessmentId == assessment.ID {
+								mhsTotal += nilai.Nilai
+							}
+						}
+
+					}
+					nt := mhsTotal / float64(len(assessments))
+					mhsNilaiArr = append(mhsNilaiArr, nt)
+				}
+
+				nilaiArr = append(nilaiArr, math.Average(mhsNilaiArr))
+			}
+
+		}
+		avgCloNilai := math.Average(nilaiArr)
+		cloWithNilai = append(cloWithNilai, model.CLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			PLOId: v.PLOId,
+			Nilai: formatAvg(avgCloNilai),
+		})
+	}
+	for _, v := range listPLO {
+		total := 0.0
+		count := 0
+		for _, clo := range cloWithNilai {
+			if clo.PLOId == v.ID {
+				total += clo.Nilai
+				count++
+			}
+		}
+
+		avgTotal := total / float64(count)
+		ploWithNilai = append(ploWithNilai, model.PLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			Nilai: formatAvg(avgTotal),
+		})
+	}
+
+	result := model.CloPloWithNilai{}
+	result.Clo = cloWithNilai
+	result.Plo = ploWithNilai
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (p *penilaianController) GetDataPenilaianPLO(c *gin.Context) {
-	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	perancangan, err := p.perancanganRepo.GetActivePerancanganObe()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Println(tahunId)
+	plo, err := p.ploRepo.GetPloByObeId(perancangan.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusOK, []string{})
+	penilaian, err := p.penilaianRepo.GetPenilaian()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ploWithNilai := []model.PLOWithNilai{}
+
+	for _, v := range plo {
+		clo, _ := p.cloRepo.GetCLOByPLOId(v.ID)
+		cloNilai := []float64{}
+		if len(clo) > 0 {
+			for _, c := range clo {
+				nilaiArr := []float64{}
+				assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
+				for _, p := range penilaian {
+					nilaiMahasiswa := []model.NilaiMahasiswa{}
+					err = json.Unmarshal([]byte(p.Nilai), &nilaiMahasiswa)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					mhsNilaiArr := []float64{}
+					for _, mhs := range nilaiMahasiswa {
+						mhsTotal := 0.0
+						for _, nilai := range mhs.NilaiAssessment {
+							for _, assessment := range assessments {
+								if nilai.AssessmentId == assessment.ID {
+									mhsTotal += nilai.Nilai
+								}
+							}
+						}
+						nt := mhsTotal / float64(len(assessments))
+						mhsNilaiArr = append(mhsNilaiArr, nt)
+					}
+
+					nt := math.Average(mhsNilaiArr)
+					nilaiArr = append(nilaiArr, nt)
+				}
+				nt := math.Average(nilaiArr)
+				cloNilai = append(cloNilai, nt)
+			}
+		}
+		total := 0.0
+		if len(cloNilai) > 0 {
+			total = math.Average(cloNilai)
+		}
+		ploWithNilai = append(ploWithNilai, model.PLOWithNilai{
+			ID:    v.ID,
+			Nama:  v.Nama,
+			Nilai: formatAvg(total),
+		})
+	}
+
+	c.JSON(http.StatusOK, ploWithNilai)
 }
 
 func (p *penilaianController) GetPenilaianById(c *gin.Context) {
@@ -185,20 +333,6 @@ func (p *penilaianController) CreatePenilaian(c *gin.Context) {
 		return
 	}
 
-	// userGet, exists := c.Get("user")
-	// if !exists {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
-	// 	return
-	// }
-
-	// user := userGet.(model.User)
-
-	// dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
 	nilai, err := json.Marshal(body.Nilai)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -222,7 +356,7 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 	var body struct {
 		Nilai   []model.NilaiMahasiswa `json:"nilai" binding:"required"`
 		MkId    int                    `json:"mk_id" binding:"required"`
-		KelasId int                    `json:"kelas_id" binding:"required`
+		KelasId int                    `json:"kelas_id" binding:"required"`
 	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -245,20 +379,6 @@ func (p *penilaianController) UpdatePenilaian(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "kelas_id can't be empty"})
 		return
 	}
-
-	// userGet, exists := c.Get("user")
-	// if !exists {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "user not exist"})
-	// 	return
-	// }
-
-	// user := userGet.(model.User)
-
-	// dosen, err := p.dosenRepo.GetDosenByUserId(user.ID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
 
 	nilai, err := json.Marshal(body.Nilai)
 	if err != nil {

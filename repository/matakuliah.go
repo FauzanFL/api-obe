@@ -13,8 +13,8 @@ type MataKuliahRepository interface {
 	GetPLOFromMataKuliah(id int) ([]model.PLO, error)
 	GetMataKuliahByObeIdAndTahunId(obeId int, tahunId int) ([]model.MataKuliah, error)
 	GetMataKuliahByObeIdTahunIdAndKeyword(obeId int, tahunId int, keyword string) ([]model.MataKuliah, error)
-	GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error)
-	GetMataKuliahByDosenObeIdAndKeyword(obeId int, dosenId int, keyword string) ([]model.MataKuliah, error)
+	GetMataKuliahByDosenObeIdAndTahunId(obeId int, dosenId int, tahunId int) ([]model.MataKuliah, error)
+	GetMataKuliahByDosenObeIdAndTahunIdAndKeyword(obeId int, dosenId int, tahunId int, keyword string) ([]model.MataKuliah, error)
 	CreateMataKuliah(mataKuliah model.MataKuliah) error
 	UpdateMataKuliah(mataKuliah model.MataKuliah) error
 	DeleteMataKuliah(id int) error
@@ -83,19 +83,19 @@ func (m *mataKuliahRepository) GetMataKuliahByObeIdTahunIdAndKeyword(obeId int, 
 	return mataKuliah, nil
 }
 
-func (m *mataKuliahRepository) GetMataKuliahByDosenObeId(obeId int, dosenId int) ([]model.MataKuliah, error) {
+func (m *mataKuliahRepository) GetMataKuliahByDosenObeIdAndTahunId(obeId int, dosenId int, tahunId int) ([]model.MataKuliah, error) {
 	var mataKuliah []model.MataKuliah
-	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN (?)", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id")).Find(&mataKuliah).Error
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND tahun_ajaran_id = ? AND id IN (?)", obeId, tahunId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id")).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}
 	return mataKuliah, nil
 }
 
-func (m *mataKuliahRepository) GetMataKuliahByDosenObeIdAndKeyword(obeId int, dosenId int, keyword string) ([]model.MataKuliah, error) {
+func (m *mataKuliahRepository) GetMataKuliahByDosenObeIdAndTahunIdAndKeyword(obeId int, dosenId int, tahunId int, keyword string) ([]model.MataKuliah, error) {
 	key := "%" + keyword + "%"
 	var mataKuliah []model.MataKuliah
-	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND id IN (?) AND (nama like ? OR kode_mk like ?)", obeId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id"), key, key).Find(&mataKuliah).Error
+	err := m.dbKurikulum.Model(&model.MataKuliah{}).Where("obe_id = ? AND tahun_ajaran_id = ? AND id IN (?) AND (nama like ? OR kode_mk like ?)", obeId, tahunId, m.dbKurikulum.Table("plotting_dosen_mk").Where("dosen_id = ?", dosenId).Select("mk_id"), key, key).Find(&mataKuliah).Error
 	if err != nil {
 		return []model.MataKuliah{}, err
 	}

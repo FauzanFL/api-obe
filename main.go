@@ -98,7 +98,7 @@ func main() {
 	lembarAssessmentController := controller.NewLembarAssessmentController(lembarAssessmentRepo, cloRepo)
 	jenisAssessmentController := controller.NewJenisAssessmentController(jenisAssessmentRepo)
 	dosenController := controller.NewDosenController(dosenRepo, mataKuliahRepo, perancanganObeRepo)
-	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, dosenRepo, ploRepo, perancanganObeRepo)
+	penilaianController := controller.NewPenilaianController(penilaianRepo, cloRepo, lembarAssessmentRepo, dosenRepo, ploRepo, perancanganObeRepo, plottingDosenRepo)
 	tahunAjaranController := controller.NewTahunAjaranController(tahunAjaranRepo)
 	beritaAcaraController := controller.NewBeritaAcaraController(beritaAcaraRepo, dosenRepo, tahunAjaranRepo, lembarAssessmentRepo, penilaianRepo)
 	kelasController := controller.NewKelasController(kelasRepo)
@@ -122,8 +122,8 @@ func main() {
 		dosenRouter := apiRouter.Group("/dosen")
 		{
 			dosenRouter.GET("/", authMiddleware.RequireAdminAuth, dosenController.GetDosen)
-			dosenRouter.GET("/mata_kuliah", authMiddleware.RequireDosenAuth, dosenController.GetMataKuliah)
-			dosenRouter.GET("/mata_kuliah/search", authMiddleware.RequireDosenAuth, dosenController.SearchMataKuliah)
+			dosenRouter.GET("/mata_kuliah/tahun/:tahunId", authMiddleware.RequireDosenAuth, dosenController.GetMataKuliahByTahun)
+			dosenRouter.GET("/mata_kuliah/tahun/:tahunId/search", authMiddleware.RequireDosenAuth, dosenController.SearchMataKuliahByTahun)
 		}
 
 		perancanganObeRouter := apiRouter.Group("/perancangan_obe")
@@ -211,8 +211,8 @@ func main() {
 			penilaianRouter.GET("/", authMiddleware.RequireAuth, penilaianController.GetPenilaian)
 			penilaianRouter.GET("/:id", authMiddleware.RequireAuth, penilaianController.GetPenilaianById)
 			penilaianRouter.GET("/data/matakuliah/:mkId/kelas/:kelasId", authMiddleware.RequireAuth, penilaianController.GetDataPenilaian)
-			penilaianRouter.GET("/data/clo_plo/matakuliah/:mkId/tahun/:tahunId", authMiddleware.RequireDosenAuth, penilaianController.GetDataPenilaianCLOPLOByMk)
-			penilaianRouter.GET("/data/plo/tahun/:tahunId", authMiddleware.RequireAuth, penilaianController.GetDataPenilaianPLO)
+			penilaianRouter.GET("/data/clo_plo/matakuliah/:mkId", authMiddleware.RequireDosenAuth, penilaianController.GetDataPenilaianCLOPLOByMk)
+			penilaianRouter.GET("/data/plo", authMiddleware.RequireAuth, penilaianController.GetDataPenilaianPLO)
 			penilaianRouter.POST("/", authMiddleware.RequireDosenAuth, penilaianController.CreatePenilaian)
 			penilaianRouter.DELETE("/delete/:id", authMiddleware.RequireDosenAuth, penilaianController.DeletePenilaian)
 			penilaianRouter.PUT("/update/:id", authMiddleware.RequireDosenAuth, penilaianController.UpdatePenilaian)

@@ -32,6 +32,11 @@ type PenilaianData struct {
 	Penilaian    PenilaianResp       `json:"penilaian"`
 }
 
+type CloPloWithNilai struct {
+	Clo []CLOWithNilai `json:"clo"`
+	Plo []PLOWithNilai `json:"plo"`
+}
+
 func (Penilaian) TableName() string {
 	return "penilaian"
 }
