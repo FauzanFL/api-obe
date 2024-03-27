@@ -63,7 +63,7 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowMethods:     []string{"PUT", "POST", "GET", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5173/"},
+		AllowOrigins:     []string{os.Getenv("CLIENT_URL")},
 	}))
 
 	dbUser := db.GetDBConnection(os.Getenv("DB_USER_IDENTIFICATION_NAME"))
