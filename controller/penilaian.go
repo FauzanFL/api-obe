@@ -195,6 +195,7 @@ func (p *penilaianController) GetDataPenilaianMataKuliahByTahun(c *gin.Context) 
 						}
 
 						cloWithNilai = append(cloWithNilai, model.CLOWithNilai{
+							ID:    c.ID,
 							Nama:  c.Nama,
 							PLOId: c.PLOId,
 							Nilai: nilai,
@@ -301,6 +302,7 @@ func (p *penilaianController) GetDataPenilaianMataKuliahByMk(c *gin.Context) {
 					}
 
 					cloWithNilai = append(cloWithNilai, model.CLOWithNilai{
+						ID:    c.ID,
 						Nama:  c.Nama,
 						PLOId: c.PLOId,
 						Nilai: nilai,
