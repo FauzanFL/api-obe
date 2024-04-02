@@ -32,6 +32,24 @@ type PenilaianData struct {
 	Penilaian    PenilaianResp       `json:"penilaian"`
 }
 
+type PenilaianMatakuliah struct {
+	Nama   string         `json:"nama"`
+	KodeMK string         `json:"kode_mk"`
+	Kelas  []KelasWithPLO `json:"kelas"`
+}
+
+type KelasWithPLO struct {
+	Nama  string            `json:"nama"`
+	Dosen Dosen             `json:"dosen"`
+	Plo   []PloWithCloNilai `json:"plo"`
+}
+
+type PloWithCloNilai struct {
+	Nama  string         `json:"nama"`
+	Nilai float64        `json:"nilai"`
+	Clo   []CLOWithNilai `json:"clo"`
+}
+
 type CloPloWithNilai struct {
 	Clo []CLOWithNilai `json:"clo"`
 	Plo []PLOWithNilai `json:"plo"`

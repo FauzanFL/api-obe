@@ -20,6 +20,8 @@ import (
 type PenilaianController interface {
 	GetPenilaian(c *gin.Context)
 	GetDataPenilaian(c *gin.Context)
+	GetDataPenilaianMataKuliahByTahun(c *gin.Context)
+	GetDataPenilaianMataKuliahByMk(c *gin.Context)
 	GetDataPenilaianCLOPLOByMk(c *gin.Context)
 	GetDataPenilaianPLO(c *gin.Context)
 	GetPenilaianById(c *gin.Context)
@@ -37,9 +39,11 @@ type penilaianController struct {
 	ploRepo         repo.PloRepository
 	perancanganRepo repo.PerancanganObeRepository
 	plottingRepo    repo.PlottingDosenMkRepository
+	matakuliahRepo  repo.MataKuliahRepository
+	kelasRepo       repo.KelasRepository
 }
 
-func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository, plottingRepo repo.PlottingDosenMkRepository) PenilaianController {
+func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo.CloRepository, assessmentRepo repo.LembarAssessmentRepository, dosenRepo repo.DosenRepository, ploRepo repo.PloRepository, perancanganRepo repo.PerancanganObeRepository, plottingRepo repo.PlottingDosenMkRepository, matakuliahRepo repo.MataKuliahRepository, kelasRepo repo.KelasRepository) PenilaianController {
 	return &penilaianController{
 		penilaianRepo,
 		cloRepo,
@@ -48,6 +52,8 @@ func NewPenilaianController(penilaianRepo repo.PenilaianRepository, cloRepo repo
 		ploRepo,
 		perancanganRepo,
 		plottingRepo,
+		matakuliahRepo,
+		kelasRepo,
 	}
 }
 
@@ -119,6 +125,224 @@ func (p *penilaianController) GetDataPenilaian(c *gin.Context) {
 		Penilaian:    penilaianRes,
 	}
 	c.JSON(http.StatusOK, dataPenilaian)
+}
+
+func (p *penilaianController) GetDataPenilaianMataKuliahByTahun(c *gin.Context) {
+	tahunId, err := strconv.Atoi(c.Param("tahunId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	perancangan, err := p.perancanganRepo.GetActivePerancanganObe()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	matakuliah, err := p.matakuliahRepo.GetMataKuliahByObeIdAndTahunId(perancangan.ID, tahunId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	listPenilaianMk := []model.PenilaianMatakuliah{}
+
+	for _, mk := range matakuliah {
+		clo, _ := p.cloRepo.GetCLOByMkId(mk.ID)
+
+		plotting, _ := p.plottingRepo.GetPlottingDosenByMkId(mk.ID)
+		kelasPlo := []model.KelasWithPLO{}
+		if len(plotting) > 0 {
+			for _, plot := range plotting {
+				ploCloNilai := []model.PloWithCloNilai{}
+				cloWithNilai := []model.CLOWithNilai{}
+				listPLO := map[int]model.PLO{}
+				kelas, _ := p.kelasRepo.GetKelasById(plot.KelasId)
+				penilaian, _ := p.penilaianRepo.GetPenilaianByKelasIdAndMkId(plot.KelasId, mk.ID)
+				if len(clo) > 0 {
+					for _, c := range clo {
+						plo, _ := p.ploRepo.GetPloById(c.PLOId)
+						listPLO[plo.ID] = plo
+						assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
+
+						mhsNilaiArr := []float64{}
+						if penilaian.ID != 0 {
+
+							nilaiMahasiswa := []model.NilaiMahasiswa{}
+							err = json.Unmarshal([]byte(penilaian.Nilai), &nilaiMahasiswa)
+							if err != nil {
+								fmt.Println("Error:", err)
+							}
+
+							for _, mhs := range nilaiMahasiswa {
+								mhsTotal := 0.0
+								for _, nilai := range mhs.NilaiAssessment {
+									for _, assessment := range assessments {
+										if nilai.AssessmentId == assessment.ID {
+											mhsTotal += nilai.Nilai
+										}
+									}
+
+								}
+								nt := mhsTotal / float64(len(assessments))
+								mhsNilaiArr = append(mhsNilaiArr, nt)
+							}
+						}
+						nilai := 0.0
+						if len(mhsNilaiArr) > 0 {
+							nilai = formatAvg(math.Average(mhsNilaiArr))
+						}
+
+						cloWithNilai = append(cloWithNilai, model.CLOWithNilai{
+							Nama:  c.Nama,
+							PLOId: c.PLOId,
+							Nilai: nilai,
+						})
+					}
+				}
+
+				for _, v := range listPLO {
+					cloInPlo := []model.CLOWithNilai{}
+					nilai := []float64{}
+					for _, clo := range cloWithNilai {
+						if clo.PLOId == v.ID {
+							nilai = append(nilai, clo.Nilai)
+							cloInPlo = append(cloInPlo, clo)
+						}
+					}
+
+					ploCloNilai = append(ploCloNilai, model.PloWithCloNilai{
+						Nama:  v.Nama,
+						Clo:   cloInPlo,
+						Nilai: formatAvg(math.Average(nilai)),
+					})
+				}
+
+				dosen, _ := p.dosenRepo.GetDosenById(plot.DosenId)
+
+				kelasPlo = append(kelasPlo, model.KelasWithPLO{
+					Nama:  kelas.KodeKelas,
+					Dosen: dosen,
+					Plo:   ploCloNilai,
+				})
+			}
+
+		}
+
+		listPenilaianMk = append(listPenilaianMk, model.PenilaianMatakuliah{
+			Nama:   mk.Nama,
+			KodeMK: mk.KodeMk,
+			Kelas:  kelasPlo,
+		})
+	}
+
+	c.JSON(http.StatusOK, listPenilaianMk)
+}
+
+func (p *penilaianController) GetDataPenilaianMataKuliahByMk(c *gin.Context) {
+	mkId, err := strconv.Atoi(c.Param("mkId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	matakuliah, err := p.matakuliahRepo.GetMataKuliahById(mkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	listPenilaianMk := []model.PenilaianMatakuliah{}
+
+	clo, _ := p.cloRepo.GetCLOByMkId(matakuliah.ID)
+
+	plotting, _ := p.plottingRepo.GetPlottingDosenByMkId(matakuliah.ID)
+	kelasPlo := []model.KelasWithPLO{}
+	if len(plotting) > 0 {
+		for _, plot := range plotting {
+			ploCloNilai := []model.PloWithCloNilai{}
+			cloWithNilai := []model.CLOWithNilai{}
+			listPLO := map[int]model.PLO{}
+			kelas, _ := p.kelasRepo.GetKelasById(plot.KelasId)
+			penilaian, _ := p.penilaianRepo.GetPenilaianByKelasIdAndMkId(plot.KelasId, matakuliah.ID)
+			if len(clo) > 0 {
+				for _, c := range clo {
+					plo, _ := p.ploRepo.GetPloById(c.PLOId)
+					listPLO[plo.ID] = plo
+					assessments, _ := p.assessmentRepo.GetLembarAssessmentByCloId(c.ID)
+
+					mhsNilaiArr := []float64{}
+					if penilaian.ID != 0 {
+
+						nilaiMahasiswa := []model.NilaiMahasiswa{}
+						err = json.Unmarshal([]byte(penilaian.Nilai), &nilaiMahasiswa)
+						if err != nil {
+							fmt.Println("Error:", err)
+						}
+
+						for _, mhs := range nilaiMahasiswa {
+							mhsTotal := 0.0
+							for _, nilai := range mhs.NilaiAssessment {
+								for _, assessment := range assessments {
+									if nilai.AssessmentId == assessment.ID {
+										mhsTotal += nilai.Nilai
+									}
+								}
+
+							}
+							nt := mhsTotal / float64(len(assessments))
+							mhsNilaiArr = append(mhsNilaiArr, nt)
+						}
+					}
+					nilai := 0.0
+					if len(mhsNilaiArr) > 0 {
+						nilai = formatAvg(math.Average(mhsNilaiArr))
+					}
+
+					cloWithNilai = append(cloWithNilai, model.CLOWithNilai{
+						Nama:  c.Nama,
+						PLOId: c.PLOId,
+						Nilai: nilai,
+					})
+				}
+			}
+
+			for _, v := range listPLO {
+				cloInPlo := []model.CLOWithNilai{}
+				nilai := []float64{}
+				for _, clo := range cloWithNilai {
+					if clo.PLOId == v.ID {
+						nilai = append(nilai, clo.Nilai)
+						cloInPlo = append(cloInPlo, clo)
+					}
+				}
+
+				ploCloNilai = append(ploCloNilai, model.PloWithCloNilai{
+					Nama:  v.Nama,
+					Clo:   cloInPlo,
+					Nilai: formatAvg(math.Average(nilai)),
+				})
+			}
+
+			dosen, _ := p.dosenRepo.GetDosenById(plot.DosenId)
+
+			kelasPlo = append(kelasPlo, model.KelasWithPLO{
+				Nama:  kelas.KodeKelas,
+				Dosen: dosen,
+				Plo:   ploCloNilai,
+			})
+		}
+
+	}
+
+	listPenilaianMk = append(listPenilaianMk, model.PenilaianMatakuliah{
+		Nama:   matakuliah.Nama,
+		KodeMK: matakuliah.KodeMk,
+		Kelas:  kelasPlo,
+	})
+
+	c.JSON(http.StatusOK, listPenilaianMk)
 }
 
 func (p *penilaianController) GetDataPenilaianCLOPLOByMk(c *gin.Context) {
