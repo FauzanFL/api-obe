@@ -162,6 +162,8 @@ func main() {
 		kurikulumRouter := apiRouter.Group("/kurikulum")
 		{
 			kurikulumRouter.GET("/", authMiddleware.RequireAdminAuth, kurikulumController.GetKurikulum)
+			kurikulumRouter.POST("/", authMiddleware.RequireAdminAuth, kurikulumController.CreateKurikulum)
+			kurikulumRouter.DELETE("/delete/:id", authMiddleware.RequireAdminAuth, kurikulumController.DeleteKurikulum)
 		}
 
 		mataKuliahRouter := apiRouter.Group("/mata_kuliah")
