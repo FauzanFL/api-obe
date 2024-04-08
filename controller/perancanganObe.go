@@ -94,6 +94,7 @@ func (m *perancanganObeController) CreatePerancanganObe(c *gin.Context) {
 	var perancanganObe model.PerancanganObe
 	perancanganObe.Nama = body.Nama
 	perancanganObe.KurikulumID = body.KurikulumID
+	perancanganObe.Status = "inactive"
 	if err := m.perancanganObeRepo.CreatePerancanganObe(perancanganObe); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
