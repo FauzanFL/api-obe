@@ -190,6 +190,7 @@ func (u *userController) UpdateUser(c *gin.Context) {
 	user.Email = body.Email
 	user.Password = pwd
 	user.ID = id
+	user.Role = savedUser.Role
 
 	if err := u.userRepo.Update(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

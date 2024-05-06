@@ -130,6 +130,7 @@ func (m *perancanganObeController) UpdatePerancanganObe(c *gin.Context) {
 	var perancanganObe model.PerancanganObe
 	perancanganObe.Nama = body.Nama
 	perancanganObe.KurikulumID = body.KurikulumID
+	perancanganObe.Status = "inactive"
 	perancanganObe.ID = id
 	if err := m.perancanganObeRepo.UpdatePerancanganObe(perancanganObe); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
